@@ -7,6 +7,8 @@ import ProgressBar from "@/components/ProgressBar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Download, Play, Clock, FileText, TrendingUp } from "lucide-react";
+import { exportToPDF } from "@/lib/pdfExport";
+import { useState } from "react";
 import type { Chapter, WorkbookProgress } from "@shared/schema";
 
 interface ChapterWithProgress extends Chapter {
@@ -16,6 +18,7 @@ interface ChapterWithProgress extends Chapter {
 
 export default function Home() {
   const { user } = useAuth();
+  const [isExporting, setIsExporting] = useState(false);
   
   const { data: chapters = [], isLoading } = useQuery<ChapterWithProgress[]>({
     queryKey: ['/api/chapters'],
@@ -80,9 +83,24 @@ export default function Home() {
                     </Button>
                   </Link>
                 )}
-                <Button variant="outline" className="px-8 py-3" data-testid="button-export">
+                <Button 
+                  variant="outline" 
+                  className="px-8 py-3" 
+                  data-testid="button-export"
+                  disabled={isExporting}
+                  onClick={async () => {
+                    setIsExporting(true);
+                    try {
+                      await exportToPDF();
+                    } catch (error) {
+                      console.error('Export failed:', error);
+                    } finally {
+                      setIsExporting(false);
+                    }
+                  }}
+                >
                   <Download className="w-4 h-4 mr-2" />
-                  Export Progress
+                  {isExporting ? 'Exporting...' : 'Export Progress'}
                 </Button>
               </div>
             </div>
