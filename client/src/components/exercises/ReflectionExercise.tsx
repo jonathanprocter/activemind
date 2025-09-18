@@ -26,8 +26,11 @@ export default function ReflectionExercise({
   const [hasChanges, setHasChanges] = useState(false);
 
   useEffect(() => {
-    setResponses(existingResponses);
-  }, [existingResponses]);
+    if (existingResponses && Object.keys(existingResponses).length > 0) {
+      setResponses(existingResponses);
+      setHasChanges(false);
+    }
+  }, [JSON.stringify(existingResponses)]); // Use JSON.stringify to prevent render loops
 
   const handleResponseChange = (questionIndex: number, value: string) => {
     const key = `question_${questionIndex}`;

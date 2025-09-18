@@ -113,7 +113,7 @@ export default function Chapter() {
 
   const handleSaveProgress = (sectionId: string, responses: any, completed: boolean = false) => {
     updateProgressMutation.mutate({
-      chapterId: currentChapter.id,
+      chapterId: parseInt(chapterId || '0'), // Ensure chapterId is an integer
       sectionId,
       responses,
       completed,

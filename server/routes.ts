@@ -5,7 +5,9 @@ import { setupAuth, isAuthenticated } from "./replitAuth";
 import { insertAssessmentSchema, insertWorkbookProgressSchema, insertAutoSaveSchema } from "@shared/schema";
 import { z } from "zod";
 
-const updateProgressSchema = insertWorkbookProgressSchema.extend({
+const updateProgressSchema = insertWorkbookProgressSchema.omit({ 
+  userId: true  // userId will be added server-side from auth session
+}).extend({
   responses: z.record(z.any()).optional()
 });
 
@@ -70,14 +72,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/progress', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
+      console.log("Progress API - Incoming request body:", JSON.stringify(req.body, null, 2));
+      console.log("Progress API - User ID:", userId);
+      
       const validatedData = updateProgressSchema.parse(req.body);
+      console.log("Progress API - Validated data:", JSON.stringify(validatedData, null, 2));
+      
       const progress = await storage.updateProgress({
         ...validatedData,
         userId
       });
+      console.log("Progress API - Saved successfully:", progress.id);
       res.json(progress);
     } catch (error) {
       if (error instanceof z.ZodError) {
+        console.error("Progress API - Validation error:", JSON.stringify(error.errors, null, 2));
         return res.status(400).json({ message: "Invalid data", errors: error.errors });
       }
       console.error("Error updating progress:", error);
