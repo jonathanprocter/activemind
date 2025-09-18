@@ -1,7 +1,7 @@
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText, ArrowLeft } from "lucide-react";
@@ -11,6 +11,7 @@ import { useQuery } from "@tanstack/react-query";
 export default function PreAssessment() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
 
   // Fetch existing assessments to check if pre-assessment already completed
   const { data: assessments = [] } = useQuery({
@@ -110,7 +111,7 @@ export default function PreAssessment() {
               description: "You can now begin your ACT workbook journey.",
             });
             setTimeout(() => {
-              window.location.href = "/";
+              setLocation("/");
             }, 2000);
           }}
         />

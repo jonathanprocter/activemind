@@ -1,7 +1,7 @@
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText, ArrowLeft, TrendingUp } from "lucide-react";
@@ -11,6 +11,7 @@ import { useQuery } from "@tanstack/react-query";
 export default function PostAssessment() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
 
   // Fetch existing assessments
   const { data: assessments = [] } = useQuery({
@@ -121,7 +122,7 @@ export default function PostAssessment() {
               description: "View your progress comparison to see how far you've come.",
             });
             setTimeout(() => {
-              window.location.href = "/assessment-comparison";
+              setLocation("/");
             }, 2000);
           }}
         />
