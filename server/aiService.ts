@@ -61,22 +61,46 @@ Generate 2-3 personalized therapeutic guidance suggestions in JSON format:
 
 Focus on ACT principles: psychological flexibility, acceptance, mindfulness, values clarification, and committed action.`;
 
-      const response = await openai.chat.completions.create({
-        model: "gpt-5",
-        messages: [{ role: "user", content: prompt }],
-        response_format: { type: "json_object" },
-      });
+      // Add timeout and error handling for OpenAI calls
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      
+      try {
+        const response = await openai.chat.completions.create({
+          model: "gpt-4-turbo", // Use supported model for JSON mode
+          messages: [{ role: "user", content: prompt + "\n\nRespond in valid JSON format." }],
+          response_format: { type: "json_object" },
+        }, {
+          signal: controller.signal
+        });
 
-      const content = response.choices[0].message.content;
-      if (!content) throw new Error('No content received from AI');
-      const result = JSON.parse(content);
-      return result.guidance.map((g: any) => ({
-        ...g,
-        userId: context.userId,
-        chapterId: context.chapterId,
-        sectionId: context.sectionId,
-        personalizedFor: { context: g.personalizedFor }
-      }));
+        clearTimeout(timeoutId);
+        const content = response.choices[0].message.content;
+        if (!content) throw new Error('No content received from AI');
+        
+        // Safe JSON parsing with validation
+        let result;
+        try {
+          result = JSON.parse(content);
+          if (!result.guidance || !Array.isArray(result.guidance)) {
+            throw new Error('Invalid AI response format');
+          }
+        } catch (parseError) {
+          console.error('JSON parse error for therapeutic guidance:', parseError);
+          throw new Error('Invalid AI response format');
+        }
+        
+        return result.guidance.map((g: any) => ({
+          ...g,
+          userId: context.userId,
+          chapterId: context.chapterId,
+          sectionId: context.sectionId,
+          personalizedFor: { context: g.personalizedFor || 'general guidance' }
+        }));
+        
+      } finally {
+        clearTimeout(timeoutId);
+      }
 
     } catch (error) {
       console.error('Error generating therapeutic guidance:', error);
@@ -238,10 +262,33 @@ Focus on optimizing learning and therapeutic outcomes based on individual progre
   async processConversation(
     context: TherapeuticContext,
     messages: ConversationMessage[],
-    conversationType: 'therapeutic_guidance' | 'reflection_support' | 'general_chat' = 'therapeutic_guidance'
+    conversationType: 'therapeutic_guidance' | 'crisis_support' | 'reflection' | 'goal_setting' = 'therapeutic_guidance'
   ): Promise<string> {
     try {
-      const systemPrompt = `You are a professional ACT (Acceptance and Commitment Therapy) therapist providing conversational support. You are warm, empathetic, and skilled in ACT principles.
+      // Handle crisis support with special safety measures
+      if (conversationType === 'crisis_support') {
+        const lastMessage = messages[messages.length - 1]?.content || '';
+        const crisisKeywords = ['suicide', 'kill myself', 'end it all', 'hurt myself', 'self-harm', 'can\'t go on'];
+        const hasCrisisContent = crisisKeywords.some(keyword => 
+          lastMessage.toLowerCase().includes(keyword)
+        );
+        
+        if (hasCrisisContent) {
+          return `I'm very concerned about what you're sharing. Your safety is the most important thing right now. 
+
+Please reach out for immediate support:
+• National Suicide Prevention Lifeline: 988 or 1-800-273-8255
+• Crisis Text Line: Text HOME to 741741
+• Emergency Services: 911
+
+You are valuable and your life matters. Professional crisis counselors are available 24/7 to help you through this difficult time. Please don't hesitate to reach out to them right now.
+
+While I'm here to support your therapeutic journey, I want to make sure you have access to the immediate, specialized help you deserve.`;
+        }
+      }
+
+      // Customize system prompt based on conversation type
+      let systemPrompt = `You are a professional ACT (Acceptance and Commitment Therapy) therapist providing conversational support. You are warm, empathetic, and skilled in ACT principles.
 
 Core ACT Principles to integrate:
 1. Psychological Flexibility
@@ -255,9 +302,24 @@ User Context:
 - Current Chapter: ${context.chapterId}
 - Section: ${context.sectionId}
 - Progress: ${context.progressHistory?.length || 0} sections completed
-- Recent Insights: ${context.previousInsights?.length || 0} insights generated
+- Recent Insights: ${context.previousInsights?.length || 0} insights generated`;
 
-Guidelines:
+      // Add conversation-type specific guidance
+      switch (conversationType) {
+        case 'crisis_support':
+          systemPrompt += `\n\nCRISIS SUPPORT MODE: Prioritize safety and stability. Validate emotions, encourage seeking professional help, and provide crisis resources when appropriate. Never provide advice that could be harmful.`;
+          break;
+        case 'reflection':
+          systemPrompt += `\n\nREFLECTION MODE: Focus on helping the user explore their thoughts, feelings, and experiences. Ask open-ended questions that encourage deeper self-exploration and mindfulness.`;
+          break;
+        case 'goal_setting':
+          systemPrompt += `\n\nGOAL SETTING MODE: Help the user identify values-based goals and create committed action plans. Focus on realistic, achievable steps aligned with their core values.`;
+          break;
+        default:
+          systemPrompt += `\n\nTHERAPEUTIC GUIDANCE MODE: Provide general therapeutic support and guidance using ACT principles.`;
+      }
+
+      systemPrompt += `\n\nGuidelines:
 - Be warm, professional, and therapeutic
 - Ask thoughtful follow-up questions
 - Encourage self-reflection and mindfulness
@@ -274,13 +336,24 @@ Guidelines:
         }))
       ];
 
-      const response = await openai.chat.completions.create({
-        model: "gpt-5",
-        messages: conversationMessages,
-        max_tokens: 500,
-      });
+      // Add timeout for conversation API calls
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout for conversations
+      
+      try {
+        const response = await openai.chat.completions.create({
+          model: "gpt-4-turbo", // Use supported model
+          messages: conversationMessages,
+          max_tokens: 500,
+        }, {
+          signal: controller.signal
+        });
 
-      return response.choices[0].message.content || 'I understand. Could you tell me more about what you\'re experiencing?';
+        clearTimeout(timeoutId);
+        return response.choices[0].message.content || 'I understand. Could you tell me more about what you\'re experiencing?';
+      } finally {
+        clearTimeout(timeoutId);
+      }
 
     } catch (error) {
       console.error('Error processing conversation:', error);

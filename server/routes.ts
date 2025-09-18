@@ -178,10 +178,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/assessments', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      console.log("Assessment API - Request body:", JSON.stringify(req.body, null, 2));
       
       const validatedData = assessmentSubmissionSchema.parse(req.body);
-      console.log("Assessment API - Validated data:", JSON.stringify(validatedData, null, 2));
       
       const assessment = await storage.saveAssessment({
         ...validatedData,
@@ -191,7 +189,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(assessment);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        console.error("Assessment API - Validation error:", JSON.stringify((error as any).errors, null, 2));
+        console.error("Assessment API - Validation error:", error.errors.map(e => ({ path: e.path, message: e.message })));
         return res.status(400).json({ message: "Invalid data", errors: error.errors });
       }
       console.error("Assessment API - Save failed:", error instanceof Error ? error.message : String(error));
@@ -243,7 +241,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(guidance);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        console.error("AI Guidance API - Validation error:", JSON.stringify(error.errors, null, 2));
+        console.error("AI Guidance API - Validation error:", error.errors.map(e => ({ path: e.path, message: e.message })));
         return res.status(400).json({ message: "Invalid data", errors: error.errors });
       }
       console.error("Error generating therapeutic guidance:", error instanceof Error ? error.message : String(error));
@@ -299,7 +297,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(prompts);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        console.error("AI Prompts API - Validation error:", JSON.stringify(error.errors, null, 2));
+        console.error("AI Prompts API - Validation error:", error.errors.map(e => ({ path: e.path, message: e.message })));
         return res.status(400).json({ message: "Invalid data", errors: error.errors });
       }
       console.error("Error generating reflection prompts:", error instanceof Error ? error.message : String(error));
@@ -370,7 +368,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(insights);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        console.error("AI Insights API - Validation error:", JSON.stringify(error.errors, null, 2));
+        console.error("AI Insights API - Validation error:", error.errors.map(e => ({ path: e.path, message: e.message })));
         return res.status(400).json({ message: "Invalid data", errors: error.errors });
       }
       console.error("Error analyzing progress insights:", error instanceof Error ? error.message : String(error));
@@ -421,7 +419,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(recommendations);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        console.error("AI Recommendations API - Validation error:", JSON.stringify(error.errors, null, 2));
+        console.error("AI Recommendations API - Validation error:", error.errors.map(e => ({ path: e.path, message: e.message })));
         return res.status(400).json({ message: "Invalid data", errors: error.errors });
       }
       console.error("Error generating adaptive recommendations:", error instanceof Error ? error.message : String(error));
@@ -509,7 +507,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ response: aiResponse, sessionId });
     } catch (error) {
       if (error instanceof z.ZodError) {
-        console.error("AI Conversation API - Validation error:", JSON.stringify(error.errors, null, 2));
+        console.error("AI Conversation API - Validation error:", error.errors.map(e => ({ path: e.path, message: e.message })));
         return res.status(400).json({ message: "Invalid data", errors: error.errors });
       }
       console.error("Error processing conversation:", error instanceof Error ? error.message : String(error));
