@@ -4,6 +4,11 @@ import {
   workbookProgress, 
   assessments, 
   autoSaves,
+  aiConversations,
+  aiInsights,
+  aiGuidance,
+  aiPrompts,
+  adaptiveRecommendations,
   type User, 
   type UpsertUser,
   type Chapter,
@@ -12,7 +17,17 @@ import {
   type Assessment,
   type InsertAssessment,
   type AutoSave,
-  type InsertAutoSave
+  type InsertAutoSave,
+  type AiConversation,
+  type InsertAiConversation,
+  type AiInsight,
+  type InsertAiInsight,
+  type AiGuidance,
+  type InsertAiGuidance,
+  type AiPrompt,
+  type InsertAiPrompt,
+  type AdaptiveRecommendation,
+  type InsertAdaptiveRecommendation
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc } from "drizzle-orm";
@@ -30,6 +45,29 @@ export interface IStorage {
   saveAssessment(assessment: InsertAssessment): Promise<Assessment>;
   getAssessments(userId: string): Promise<Assessment[]>;
   exportUserData(userId: string): Promise<any>;
+  
+  // AI Features
+  saveAiGuidance(guidance: InsertAiGuidance): Promise<AiGuidance>;
+  getAiGuidance(userId: string, chapterId?: number): Promise<AiGuidance[]>;
+  updateAiGuidance(id: string, updates: Partial<AiGuidance>): Promise<void>;
+  
+  saveAiPrompt(prompt: InsertAiPrompt): Promise<AiPrompt>;
+  getAiPrompt(id: string): Promise<AiPrompt | undefined>;
+  getAiPrompts(userId: string, chapterId?: number): Promise<AiPrompt[]>;
+  updateAiPrompt(id: string, updates: Partial<AiPrompt>): Promise<void>;
+  
+  saveAiInsight(insight: InsertAiInsight): Promise<AiInsight>;
+  getAiInsights(userId: string, acknowledged?: boolean): Promise<AiInsight[]>;
+  updateAiInsight(id: string, updates: Partial<AiInsight>): Promise<void>;
+  
+  saveAdaptiveRecommendation(recommendation: InsertAdaptiveRecommendation): Promise<AdaptiveRecommendation>;
+  getAdaptiveRecommendations(userId: string, implemented?: boolean): Promise<AdaptiveRecommendation[]>;
+  updateAdaptiveRecommendation(id: string, updates: Partial<AdaptiveRecommendation>): Promise<void>;
+  
+  saveAiConversation(conversation: InsertAiConversation): Promise<AiConversation>;
+  getAiConversation(userId: string, sessionId: string): Promise<AiConversation | undefined>;
+  getAiConversations(userId: string): Promise<AiConversation[]>;
+  updateAiConversation(sessionId: string, updates: Partial<AiConversation>): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -199,6 +237,171 @@ export class DatabaseStorage implements IStorage {
       assessments: assessmentsData,
       reflections: {} // TODO: Extract reflection responses from progress
     };
+  }
+
+  // AI Features Implementation
+
+  // AI Guidance Methods
+  async saveAiGuidance(guidance: InsertAiGuidance): Promise<AiGuidance> {
+    const [savedGuidance] = await db
+      .insert(aiGuidance)
+      .values(guidance)
+      .returning();
+    return savedGuidance;
+  }
+
+  async getAiGuidance(userId: string, chapterId?: number): Promise<AiGuidance[]> {
+    const whereConditions = [eq(aiGuidance.userId, userId)];
+    
+    if (chapterId !== undefined) {
+      whereConditions.push(eq(aiGuidance.chapterId, chapterId));
+    }
+
+    return await db
+      .select()
+      .from(aiGuidance)
+      .where(and(...whereConditions))
+      .orderBy(desc(aiGuidance.createdAt));
+  }
+
+  async updateAiGuidance(id: string, updates: Partial<AiGuidance>): Promise<void> {
+    await db
+      .update(aiGuidance)
+      .set(updates)
+      .where(eq(aiGuidance.id, id));
+  }
+
+  // AI Prompts Methods
+  async saveAiPrompt(prompt: InsertAiPrompt): Promise<AiPrompt> {
+    const [savedPrompt] = await db
+      .insert(aiPrompts)
+      .values(prompt)
+      .returning();
+    return savedPrompt;
+  }
+
+  async getAiPrompt(id: string): Promise<AiPrompt | undefined> {
+    const [prompt] = await db
+      .select()
+      .from(aiPrompts)
+      .where(eq(aiPrompts.id, id));
+    return prompt || undefined;
+  }
+
+  async getAiPrompts(userId: string, chapterId?: number): Promise<AiPrompt[]> {
+    const whereConditions = [eq(aiPrompts.userId, userId)];
+    
+    if (chapterId !== undefined) {
+      whereConditions.push(eq(aiPrompts.chapterId, chapterId));
+    }
+
+    return await db
+      .select()
+      .from(aiPrompts)
+      .where(and(...whereConditions))
+      .orderBy(desc(aiPrompts.createdAt));
+  }
+
+  async updateAiPrompt(id: string, updates: Partial<AiPrompt>): Promise<void> {
+    await db
+      .update(aiPrompts)
+      .set(updates)
+      .where(eq(aiPrompts.id, id));
+  }
+
+  // AI Insights Methods
+  async saveAiInsight(insight: InsertAiInsight): Promise<AiInsight> {
+    const [savedInsight] = await db
+      .insert(aiInsights)
+      .values(insight)
+      .returning();
+    return savedInsight;
+  }
+
+  async getAiInsights(userId: string, acknowledged?: boolean): Promise<AiInsight[]> {
+    const whereConditions = [eq(aiInsights.userId, userId)];
+    
+    if (acknowledged !== undefined) {
+      whereConditions.push(eq(aiInsights.acknowledged, acknowledged));
+    }
+
+    return await db
+      .select()
+      .from(aiInsights)
+      .where(and(...whereConditions))
+      .orderBy(desc(aiInsights.createdAt));
+  }
+
+  async updateAiInsight(id: string, updates: Partial<AiInsight>): Promise<void> {
+    await db
+      .update(aiInsights)
+      .set(updates)
+      .where(eq(aiInsights.id, id));
+  }
+
+  // Adaptive Recommendations Methods
+  async saveAdaptiveRecommendation(recommendation: InsertAdaptiveRecommendation): Promise<AdaptiveRecommendation> {
+    const [savedRecommendation] = await db
+      .insert(adaptiveRecommendations)
+      .values(recommendation)
+      .returning();
+    return savedRecommendation;
+  }
+
+  async getAdaptiveRecommendations(userId: string, implemented?: boolean): Promise<AdaptiveRecommendation[]> {
+    const whereConditions = [eq(adaptiveRecommendations.userId, userId)];
+    
+    if (implemented !== undefined) {
+      whereConditions.push(eq(adaptiveRecommendations.implemented, implemented));
+    }
+
+    return await db
+      .select()
+      .from(adaptiveRecommendations)
+      .where(and(...whereConditions))
+      .orderBy(desc(adaptiveRecommendations.priority), desc(adaptiveRecommendations.createdAt));
+  }
+
+  async updateAdaptiveRecommendation(id: string, updates: Partial<AdaptiveRecommendation>): Promise<void> {
+    await db
+      .update(adaptiveRecommendations)
+      .set(updates)
+      .where(eq(adaptiveRecommendations.id, id));
+  }
+
+  // AI Conversations Methods
+  async saveAiConversation(conversation: InsertAiConversation): Promise<AiConversation> {
+    const [savedConversation] = await db
+      .insert(aiConversations)
+      .values(conversation)
+      .returning();
+    return savedConversation;
+  }
+
+  async getAiConversation(userId: string, sessionId: string): Promise<AiConversation | undefined> {
+    const [conversation] = await db
+      .select()
+      .from(aiConversations)
+      .where(and(
+        eq(aiConversations.userId, userId),
+        eq(aiConversations.sessionId, sessionId)
+      ));
+    return conversation || undefined;
+  }
+
+  async getAiConversations(userId: string): Promise<AiConversation[]> {
+    return await db
+      .select()
+      .from(aiConversations)
+      .where(eq(aiConversations.userId, userId))
+      .orderBy(desc(aiConversations.updatedAt));
+  }
+
+  async updateAiConversation(sessionId: string, updates: Partial<AiConversation>): Promise<void> {
+    await db
+      .update(aiConversations)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(aiConversations.sessionId, sessionId));
   }
 }
 
