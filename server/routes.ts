@@ -72,24 +72,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/progress', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      console.log("Progress API - Incoming request body:", JSON.stringify(req.body, null, 2));
-      console.log("Progress API - User ID:", userId);
-      
       const validatedData = updateProgressSchema.parse(req.body);
-      console.log("Progress API - Validated data:", JSON.stringify(validatedData, null, 2));
       
       const progress = await storage.updateProgress({
         ...validatedData,
         userId
       });
-      console.log("Progress API - Saved successfully:", progress.id);
+      
       res.json(progress);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        console.error("Progress API - Validation error:", JSON.stringify(error.errors, null, 2));
+        console.error("Progress API - Validation failed for user", req.user?.claims?.sub?.substring(0, 8) + "...");
         return res.status(400).json({ message: "Invalid data", errors: error.errors });
       }
-      console.error("Error updating progress:", error);
+      console.error("Progress API - Update failed:", error.message);
       res.status(500).json({ message: "Failed to update progress" });
     }
   });
@@ -140,7 +136,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid data", errors: error.errors });
       }
-      console.error("Error saving assessment:", error);
+      console.error("Assessment API - Save failed:", error.message);
       res.status(500).json({ message: "Failed to save assessment" });
     }
   });

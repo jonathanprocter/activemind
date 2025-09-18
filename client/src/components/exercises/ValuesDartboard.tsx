@@ -31,8 +31,10 @@ export default function ValuesDartboard({ onSave, existingMarkers = [] }: Values
   const [markers, setMarkers] = useState<DartboardMarker[]>(existingMarkers);
 
   useEffect(() => {
-    setMarkers(existingMarkers);
-  }, [existingMarkers]);
+    if (existingMarkers.length > 0 && JSON.stringify(existingMarkers) !== JSON.stringify(markers)) {
+      setMarkers(existingMarkers);
+    }
+  }, [JSON.stringify(existingMarkers)]); // Prevent render loops
 
   const handleDartboardClick = (event: React.MouseEvent<SVGSVGElement>) => {
     const svg = event.currentTarget;
