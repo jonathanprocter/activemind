@@ -6,7 +6,7 @@ import Sidebar from "@/components/Sidebar";
 import ProgressBar from "@/components/ProgressBar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Download, Play, Clock } from "lucide-react";
+import { Download, Play, Clock, FileText, TrendingUp } from "lucide-react";
 import type { Chapter, WorkbookProgress } from "@shared/schema";
 
 interface ChapterWithProgress extends Chapter {
@@ -27,6 +27,11 @@ export default function Home() {
     enabled: !!user,
   });
 
+  const { data: assessments = [] } = useQuery({
+    queryKey: ['/api/assessments'],
+    enabled: !!user,
+  });
+
   const { data: autoSaveStatus } = useQuery<{ savedAt?: string }>({
     queryKey: ['/api/auto-save/home'],
     enabled: !!user,
@@ -35,6 +40,9 @@ export default function Home() {
   const completedChapters = chapters.filter(c => c.completionRate === 100).length;
   const overallProgress = chapters.length > 0 ? Math.round((completedChapters / chapters.length) * 100) : 0;
   const currentChapter = chapters.find(c => c.completionRate > 0 && c.completionRate < 100) || chapters[0];
+  
+  const preAssessment = assessments.find(a => a.assessmentType === 'pre');
+  const postAssessment = assessments.find(a => a.assessmentType === 'post');
 
   if (isLoading) {
     return <div className="min-h-screen bg-background" data-testid="loading-home">Loading...</div>;
@@ -118,6 +126,83 @@ export default function Home() {
                     </div>
                   </CardContent>
                 </Card>
+              </div>
+
+              {/* Assessments Section */}
+              <div className="mb-8">
+                <h2 className="text-2xl font-semibold text-foreground mb-4">Assessments</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <Card className="border-primary/20 bg-primary/5">
+                    <CardHeader>
+                      <CardTitle className="flex items-center space-x-2">
+                        <FileText className="w-5 h-5 text-primary" />
+                        <span>Pre-Assessment</span>
+                        {preAssessment && (
+                          <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+                            <span className="text-xs text-white">✓</span>
+                          </div>
+                        )}
+                      </CardTitle>
+                      <CardDescription>
+                        Establish your baseline before beginning the ACT workbook journey.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        <div className="text-sm text-muted-foreground">
+                          15 questions • 5-10 minutes
+                        </div>
+                        <Link href="/pre-assessment">
+                          <Button 
+                            variant={preAssessment ? "outline" : "default"}
+                            className="w-full"
+                            data-testid="button-pre-assessment"
+                          >
+                            {preAssessment ? 'Review Pre-Assessment' : 'Start Pre-Assessment'}
+                          </Button>
+                        </Link>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="border-green-200 bg-green-50 dark:bg-green-900/20">
+                    <CardHeader>
+                      <CardTitle className="flex items-center space-x-2">
+                        <TrendingUp className="w-5 h-5 text-green-600" />
+                        <span>Post-Assessment</span>
+                        {postAssessment && (
+                          <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+                            <span className="text-xs text-white">✓</span>
+                          </div>
+                        )}
+                      </CardTitle>
+                      <CardDescription>
+                        Measure your progress and growth after completing the workbook.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        <div className="text-sm text-muted-foreground">
+                          {completedChapters < chapters.length ? 
+                            `Complete ${chapters.length - completedChapters} more chapters to unlock` :
+                            "15 questions • 5-10 minutes"
+                          }
+                        </div>
+                        <Link href="/post-assessment">
+                          <Button 
+                            variant={postAssessment ? "outline" : "default"}
+                            className="w-full"
+                            disabled={completedChapters < chapters.length && !postAssessment}
+                            data-testid="button-post-assessment"
+                          >
+                            {postAssessment ? 'Review Post-Assessment' : 
+                             completedChapters < chapters.length ? 'Complete All Chapters First' : 'Start Post-Assessment'}
+                          </Button>
+                        </Link>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
               </div>
 
               {/* Chapter Grid */}

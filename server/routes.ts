@@ -123,17 +123,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Submit assessment
+  // Create assessment schema that excludes userId since it's added server-side
+  const assessmentSubmissionSchema = insertAssessmentSchema.omit({ userId: true });
+
   app.post('/api/assessments', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const validatedData = insertAssessmentSchema.parse(req.body);
+      console.log("Assessment API - Request body:", JSON.stringify(req.body, null, 2));
+      
+      const validatedData = assessmentSubmissionSchema.parse(req.body);
+      console.log("Assessment API - Validated data:", JSON.stringify(validatedData, null, 2));
+      
       const assessment = await storage.saveAssessment({
         ...validatedData,
         userId
       });
+      console.log("Assessment API - Saved successfully");
       res.json(assessment);
     } catch (error) {
       if (error instanceof z.ZodError) {
+        console.error("Assessment API - Validation error:", JSON.stringify(error.errors, null, 2));
         return res.status(400).json({ message: "Invalid data", errors: error.errors });
       }
       console.error("Assessment API - Save failed:", error.message);

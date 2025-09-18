@@ -7,6 +7,8 @@ import { useAuth } from "@/hooks/useAuth";
 import Landing from "@/pages/Landing";
 import Home from "@/pages/Home";
 import Chapter from "@/pages/Chapter";
+import PreAssessment from "@/pages/PreAssessment";
+import PostAssessment from "@/pages/PostAssessment";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -20,6 +22,8 @@ function Router() {
         <>
           <Route path="/" component={Home} />
           <Route path="/chapter/:chapterId" component={Chapter} />
+          <Route path="/pre-assessment" component={PreAssessment} />
+          <Route path="/post-assessment" component={PostAssessment} />
         </>
       )}
       <Route component={NotFound} />
