@@ -109,21 +109,22 @@ export default function ValuesDartboard({ onSave, existingMarkers = [] }: Values
               width="300" 
               height="300" 
               viewBox="0 0 300 300" 
-              className="border border-border rounded-full cursor-crosshair"
+              className="border rounded-full cursor-crosshair shadow-sm"
               onClick={handleDartboardClick}
               data-testid="dartboard-svg"
+              style={{ borderColor: 'hsl(210, 20%, 88%)' }}
             >
-              {/* Concentric circles */}
-              <circle cx="150" cy="150" r="140" fill="hsl(var(--muted))" stroke="hsl(var(--border))" strokeWidth="2"/>
-              <circle cx="150" cy="150" r="105" fill="hsl(var(--card))" stroke="hsl(var(--border))" strokeWidth="2"/>
-              <circle cx="150" cy="150" r="70" fill="hsl(var(--secondary))" stroke="hsl(var(--border))" strokeWidth="2"/>
-              <circle cx="150" cy="150" r="35" fill="hsl(var(--primary))" stroke="hsl(var(--border))" strokeWidth="2"/>
+              {/* Concentric circles with natural colors */}
+              <circle cx="150" cy="150" r="140" fill="hsl(35, 25%, 93%)" stroke="hsl(210, 20%, 88%)" strokeWidth="2"/>
+              <circle cx="150" cy="150" r="105" fill="hsl(40, 20%, 97%)" stroke="hsl(210, 20%, 88%)" strokeWidth="2"/>
+              <circle cx="150" cy="150" r="70" fill="hsl(45, 30%, 88%)" stroke="hsl(210, 20%, 88%)" strokeWidth="2"/>
+              <circle cx="150" cy="150" r="35" fill="hsl(200, 20%, 55%)" stroke="hsl(210, 20%, 88%)" strokeWidth="2"/>
               
               {/* Section dividers */}
-              <line x1="150" y1="10" x2="150" y2="290" stroke="hsl(var(--border))" strokeWidth="2"/>
-              <line x1="10" y1="150" x2="290" y2="150" stroke="hsl(var(--border))" strokeWidth="2"/>
-              <line x1="45" y1="45" x2="255" y2="255" stroke="hsl(var(--border))" strokeWidth="2"/>
-              <line x1="255" y1="45" x2="45" y2="255" stroke="hsl(var(--border))" strokeWidth="2"/>
+              <line x1="150" y1="10" x2="150" y2="290" stroke="hsl(210, 20%, 88%)" strokeWidth="1" strokeDasharray="3,3" opacity="0.6"/>
+              <line x1="10" y1="150" x2="290" y2="150" stroke="hsl(210, 20%, 88%)" strokeWidth="1" strokeDasharray="3,3" opacity="0.6"/>
+              <line x1="45" y1="45" x2="255" y2="255" stroke="hsl(210, 20%, 88%)" strokeWidth="1" strokeDasharray="3,3" opacity="0.6"/>
+              <line x1="255" y1="45" x2="45" y2="255" stroke="hsl(210, 20%, 88%)" strokeWidth="1" strokeDasharray="3,3" opacity="0.6"/>
               
               {/* Markers */}
               {markers.map((marker) => (
@@ -131,11 +132,11 @@ export default function ValuesDartboard({ onSave, existingMarkers = [] }: Values
                   key={marker.id}
                   cx={marker.x}
                   cy={marker.y}
-                  r="6"
-                  fill="hsl(var(--accent))"
-                  stroke="hsl(var(--accent-foreground))"
+                  r="8"
+                  fill="hsl(180, 15%, 65%)"
+                  stroke="hsl(215, 15%, 25%)"
                   strokeWidth="2"
-                  className="cursor-pointer hover:r-8 transition-all"
+                  className="cursor-pointer transition-all hover:opacity-80"
                   onClick={(e) => {
                     e.stopPropagation();
                     removeMarker(marker.id);
