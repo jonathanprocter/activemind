@@ -63,7 +63,7 @@ export default function Home() {
         <Sidebar chapters={chapters} currentChapterId={currentChapter?.id} />
         <main className="flex-1 overflow-y-auto">
           {/* Hero Section */}
-          <section className="bg-gradient-to-br from-background to-muted py-12 px-4 sm:px-6 lg:px-8">
+          <section className="hero-gradient py-12 px-4 sm:px-6 lg:px-8">
             <div className="max-w-4xl mx-auto text-center">
               <div className="mb-8 relative">
                 <img 
@@ -184,9 +184,9 @@ export default function Home() {
                 </h2>
                 
                 {isFirstTimeUser && (
-                  <div className="mb-6 p-4 bg-primary/5 border border-primary/20 rounded-lg">
+                  <div className="mb-6 p-4 bg-primary/10 border border-natural rounded-lg card-natural">
                     <div className="flex items-start space-x-3">
-                      <div className="w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">
+                      <div className="w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold shadow-sm">
                         1
                       </div>
                       <div>
@@ -200,7 +200,7 @@ export default function Home() {
                 )}
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <Card className={`transition-all ${isFirstTimeUser ? 'border-primary bg-primary/10 shadow-lg' : 'border-primary/20 bg-primary/5'}`}>
+                  <Card className={`card-hover ${isFirstTimeUser ? 'border-primary bg-primary/10 shadow-lg card-natural' : 'border-primary/20 bg-primary/5 card-natural'}`}>
                     <CardHeader>
                       <CardTitle className="flex items-center space-x-2">
                         <FileText className="w-5 h-5 text-primary" />
@@ -288,9 +288,9 @@ export default function Home() {
                 </h2>
                 
                 {isFirstTimeUser && (
-                  <div className="mb-6 p-4 bg-muted/50 border border-muted rounded-lg">
+                  <div className="mb-6 p-4 bg-natural-muted border border-natural rounded-lg card-natural">
                     <div className="flex items-start space-x-3">
-                      <div className="w-8 h-8 bg-muted-foreground text-background rounded-full flex items-center justify-center text-sm font-bold">
+                      <div className="w-8 h-8 bg-accent text-accent-foreground rounded-full flex items-center justify-center text-sm font-bold shadow-sm">
                         2
                       </div>
                       <div>
@@ -311,7 +311,7 @@ export default function Home() {
                     return (
                       <Card 
                         key={chapter.id} 
-                        className={`transition-all hover:shadow-lg ${
+                        className={`card-hover ${
                           chapter.isLocked || (isFirstTimeUser && !preAssessment) ? 'opacity-60' : 
                           shouldHighlight ? 'border-primary bg-primary/5 shadow-lg' :
                           'hover:transform hover:-translate-y-1'
