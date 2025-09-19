@@ -1,3 +1,4 @@
+
 import { Link, useLocation } from "wouter";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -68,7 +69,7 @@ export default function Sidebar({ chapters, currentChapterId }: SidebarProps) {
 
         <nav className="space-y-1">
           <Link href="/">
-            <a className={`flex items-center justify-between p-3 rounded-lg transition-colors ${
+            <div className={`flex items-center justify-between p-3 rounded-lg transition-colors cursor-pointer ${
               isActive('/') 
                 ? 'bg-muted text-foreground font-medium' 
                 : 'hover:bg-muted'
@@ -78,11 +79,11 @@ export default function Sidebar({ chapters, currentChapterId }: SidebarProps) {
                 <span>Introduction</span>
               </div>
               <CheckCircle className="w-4 h-4 text-primary" />
-            </a>
+            </div>
           </Link>
 
           <Link href="/assessment">
-            <a className={`flex items-center justify-between p-3 rounded-lg transition-colors ${
+            <div className={`flex items-center justify-between p-3 rounded-lg transition-colors cursor-pointer ${
               isActive('/assessment') 
                 ? 'bg-muted text-foreground font-medium' 
                 : 'hover:bg-muted'
@@ -92,7 +93,7 @@ export default function Sidebar({ chapters, currentChapterId }: SidebarProps) {
                 <span>Pre-Assessment</span>
               </div>
               <CheckCircle className="w-4 h-4 text-primary" />
-            </a>
+            </div>
           </Link>
 
           {chapters.map((chapter) => {
@@ -102,7 +103,7 @@ export default function Sidebar({ chapters, currentChapterId }: SidebarProps) {
 
             return (
               <Link key={chapter.id} href={chapterPath}>
-                <a className={`flex items-center justify-between p-3 rounded-lg transition-colors ${
+                <div className={`flex items-center justify-between p-3 rounded-lg transition-colors cursor-pointer ${
                   isCurrentChapter 
                     ? 'bg-primary/10 text-primary font-medium border border-primary/20' 
                     : chapter.isLocked 
@@ -114,13 +115,13 @@ export default function Sidebar({ chapters, currentChapterId }: SidebarProps) {
                     <span>{chapter.orderIndex}. {chapter.title}</span>
                   </div>
                   {getStatusIcon(chapter)}
-                </a>
+                </div>
               </Link>
             );
           })}
 
           <Link href="/conclusion">
-            <a className={`flex items-center justify-between p-3 rounded-lg transition-colors text-muted-foreground ${
+            <div className={`flex items-center justify-between p-3 rounded-lg transition-colors cursor-pointer text-muted-foreground ${
               isActive('/conclusion') 
                 ? 'bg-muted text-foreground font-medium' 
                 : 'hover:bg-muted cursor-not-allowed'
@@ -130,7 +131,7 @@ export default function Sidebar({ chapters, currentChapterId }: SidebarProps) {
                 <span>Conclusion</span>
               </div>
               <Lock className="w-4 h-4" />
-            </a>
+            </div>
           </Link>
         </nav>
 
