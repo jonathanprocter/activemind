@@ -1,5 +1,6 @@
 
 import { Link, useLocation } from "wouter";
+import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import ProgressBar from "./ProgressBar";
@@ -17,7 +18,9 @@ import {
   CheckCircle,
   Clock,
   Lock,
-  Phone
+  Phone,
+  Menu,
+  X
 } from "lucide-react";
 import type { Chapter } from "@shared/schema";
 
@@ -29,6 +32,12 @@ interface ChapterWithProgress extends Chapter {
 interface SidebarProps {
   chapters: ChapterWithProgress[];
   currentChapterId?: number;
+}
+
+// Create a context for mobile sidebar state if needed globally
+interface SidebarState {
+  isMobileOpen: boolean;
+  setIsMobileOpen: (open: boolean) => void;
 }
 
 const chapterIcons = {
@@ -43,6 +52,7 @@ const chapterIcons = {
 
 export default function Sidebar({ chapters, currentChapterId }: SidebarProps) {
   const [location] = useLocation();
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   const completedChapters = chapters.filter(c => c.completionRate === 100).length;
   const overallProgress = chapters.length > 0 ? Math.round((completedChapters / chapters.length) * 100) : 0;
@@ -56,9 +66,56 @@ export default function Sidebar({ chapters, currentChapterId }: SidebarProps) {
 
   const isActive = (path: string) => location === path;
 
+  const handleMobileNavClick = () => {
+    // Auto-close sidebar on mobile when navigation occurs
+    setIsMobileOpen(false);
+  };
+
+  // Auto-close sidebar on any route change for robustness
+  useEffect(() => {
+    if (isMobileOpen) {
+      setIsMobileOpen(false);
+    }
+  }, [location]);
+
   return (
-    <aside className="fixed md:static w-80 bg-card border-r border-border shadow-lg md:shadow-none z-40 h-full md:h-auto overflow-y-auto">
+    <>
+      {/* Mobile Toggle Button */}
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={() => setIsMobileOpen(true)}
+        className="fixed top-4 left-4 z-50 md:hidden bg-card border shadow-md"
+        data-testid="button-mobile-menu"
+        aria-label="Open navigation menu"
+      >
+        <Menu className="w-5 h-5" />
+      </Button>
+
+      {/* Mobile/Tablet Backdrop */}
+      {isMobileOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-30 md:hidden transition-opacity duration-300" 
+          onClick={() => setIsMobileOpen(false)}
+        />
+      )}
+      
+      {/* Sidebar */}
+      <aside className={`fixed top-0 left-0 h-full w-80 max-w-[85vw] bg-card border-r border-border shadow-xl z-40 transform transition-transform duration-300 ease-in-out md:static md:max-w-none md:shadow-none md:transform-none overflow-y-auto ${
+        isMobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+      }`}>
       <div className="p-6">
+        {/* Mobile Close Button */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setIsMobileOpen(false)}
+          className="absolute top-4 right-4 md:hidden"
+          data-testid="button-close-mobile-menu"
+          aria-label="Close navigation menu"
+        >
+          <X className="w-5 h-5" />
+        </Button>
         <div className="mb-8">
           <h2 className="text-lg font-semibold text-foreground mb-2">Your Journey</h2>
           <ProgressBar progress={overallProgress} className="mb-2" />
@@ -69,11 +126,15 @@ export default function Sidebar({ chapters, currentChapterId }: SidebarProps) {
 
         <nav className="space-y-1">
           <Link href="/">
-            <div className={`flex items-center justify-between p-3 rounded-lg transition-colors cursor-pointer ${
-              isActive('/') 
-                ? 'bg-muted text-foreground font-medium' 
-                : 'hover:bg-muted'
-            }`} data-testid="link-home">
+            <div 
+              className={`flex items-center justify-between p-3 rounded-lg transition-colors cursor-pointer ${
+                isActive('/') 
+                  ? 'bg-muted text-foreground font-medium' 
+                  : 'hover:bg-muted'
+              }`} 
+              data-testid="link-home"
+              onClick={handleMobileNavClick}
+            >
               <div className="flex items-center space-x-3">
                 <Home className="w-5 h-5" />
                 <span>Introduction</span>
@@ -83,11 +144,15 @@ export default function Sidebar({ chapters, currentChapterId }: SidebarProps) {
           </Link>
 
           <Link href="/assessment">
-            <div className={`flex items-center justify-between p-3 rounded-lg transition-colors cursor-pointer ${
-              isActive('/assessment') 
-                ? 'bg-muted text-foreground font-medium' 
-                : 'hover:bg-muted'
-            }`} data-testid="link-assessment">
+            <div 
+              className={`flex items-center justify-between p-3 rounded-lg transition-colors cursor-pointer ${
+                isActive('/assessment') 
+                  ? 'bg-muted text-foreground font-medium' 
+                  : 'hover:bg-muted'
+              }`} 
+              data-testid="link-assessment"
+              onClick={handleMobileNavClick}
+            >
               <div className="flex items-center space-x-3">
                 <ClipboardCheck className="w-5 h-5" />
                 <span>Pre-Assessment</span>
@@ -103,13 +168,17 @@ export default function Sidebar({ chapters, currentChapterId }: SidebarProps) {
 
             return (
               <Link key={chapter.id} href={chapterPath}>
-                <div className={`flex items-center justify-between p-3 rounded-lg transition-colors cursor-pointer ${
-                  isCurrentChapter 
-                    ? 'bg-primary/10 text-primary font-medium border border-primary/20' 
-                    : chapter.isLocked 
-                    ? 'text-muted-foreground cursor-not-allowed'
-                    : 'hover:bg-muted'
-                }`} data-testid={`link-chapter-${chapter.id}`}>
+                <div 
+                  className={`flex items-center justify-between p-3 rounded-lg transition-colors cursor-pointer ${
+                    isCurrentChapter 
+                      ? 'bg-primary/10 text-primary font-medium border border-primary/20' 
+                      : chapter.isLocked 
+                      ? 'text-muted-foreground cursor-not-allowed'
+                      : 'hover:bg-muted'
+                  }`} 
+                  data-testid={`link-chapter-${chapter.id}`}
+                  onClick={chapter.isLocked ? undefined : handleMobileNavClick}
+                >
                   <div className="flex items-center space-x-3">
                     <IconComponent className="w-5 h-5" />
                     <span>{chapter.orderIndex}. {chapter.title}</span>
@@ -145,5 +214,6 @@ export default function Sidebar({ chapters, currentChapterId }: SidebarProps) {
         </div>
       </div>
     </aside>
+    </>
   );
 }

@@ -51,10 +51,10 @@ export default function AssessmentQuestion({
               {questionNumber}. {question.text}
             </p>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Strongly Disagree</span>
-              <div className="flex space-x-4">
+              <span className="text-xs text-muted-foreground font-medium">Strongly Disagree</span>
+              <div className="flex space-x-3">
                 {[1, 2, 3, 4, 5].map((rating) => (
-                  <label key={rating} className="flex flex-col items-center cursor-pointer">
+                  <label key={rating} className="flex flex-col items-center cursor-pointer group">
                     <input
                       type="radio"
                       name={`q${question.id}`}
@@ -65,18 +65,19 @@ export default function AssessmentQuestion({
                       data-testid={`radio-${question.id}-${rating}`}
                     />
                     <div
-                      className={`w-8 h-8 rounded-full border-2 transition-colors flex items-center justify-center ${
+                      onClick={() => handleRatingSelect(rating)}
+                      className={`w-10 h-10 rounded-full border-2 transition-all duration-200 flex items-center justify-center cursor-pointer select-none ${
                         selectedRating === rating
-                          ? 'border-primary bg-primary text-primary-foreground'
-                          : 'border-border hover:border-primary'
+                          ? 'border-primary bg-primary text-primary-foreground shadow-md scale-105'
+                          : 'border-muted-foreground/30 hover:border-primary hover:shadow-md hover:scale-105 bg-background'
                       }`}
                     >
-                      <span className="text-sm font-medium">{rating}</span>
+                      <span className="text-sm font-semibold">{rating}</span>
                     </div>
                   </label>
                 ))}
               </div>
-              <span className="text-sm text-muted-foreground">Strongly Agree</span>
+              <span className="text-xs text-muted-foreground font-medium">Strongly Agree</span>
             </div>
           </div>
 
