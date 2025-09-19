@@ -32,6 +32,110 @@ export interface ConversationMessage {
 
 export class AITherapeuticService {
   
+  // Shared OpenAI helper with robust error handling, timeouts, and retries
+  private async robustOpenAICall<T>(
+    messages: { role: string; content: string }[],
+    options: {
+      maxTokens?: number;
+      requireJSON?: boolean;
+      retries?: number;
+      timeoutMs?: number;
+      parseResult?: (content: string) => T;
+    } = {}
+  ): Promise<T | string> {
+    const {
+      maxTokens = 1000,
+      requireJSON = false,
+      retries = 2,
+      timeoutMs = 12000,
+      parseResult
+    } = options;
+
+    let lastError: Error | null = null;
+
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+      try {
+        const requestOptions: any = {
+          model: "gpt-4-turbo", // Use supported model with JSON mode capabilities
+          messages: messages.map(msg => ({
+            role: msg.role as "system" | "user" | "assistant",
+            content: msg.content
+          })),
+          max_tokens: maxTokens,
+        };
+
+        if (requireJSON) {
+          requestOptions.response_format = { type: "json_object" };
+        }
+
+        const response = await openai.chat.completions.create(requestOptions, {
+          signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+        const content = response.choices[0]?.message?.content;
+        
+        if (!content) {
+          throw new Error('No content received from AI');
+        }
+
+        // If JSON parsing is required
+        if (requireJSON && parseResult) {
+          try {
+            return parseResult(content);
+          } catch (parseError) {
+            console.error(`JSON parse error (attempt ${attempt + 1}):`, parseError instanceof Error ? parseError.message : String(parseError));
+            if (attempt === retries) {
+              throw new Error('Invalid AI response format after all retries');
+            }
+            continue; // Retry on JSON parse error
+          }
+        }
+
+        // If JSON is required but no parser provided
+        if (requireJSON) {
+          try {
+            return JSON.parse(content);
+          } catch (parseError) {
+            console.error(`JSON parse error (attempt ${attempt + 1}):`, parseError instanceof Error ? parseError.message : String(parseError));
+            if (attempt === retries) {
+              throw new Error('Invalid AI response format after all retries');
+            }
+            continue; // Retry on JSON parse error
+          }
+        }
+
+        // Return raw content for non-JSON responses
+        return content;
+
+      } catch (error) {
+        clearTimeout(timeoutId);
+        lastError = error instanceof Error ? error : new Error(String(error));
+        
+        // Don't retry on certain errors
+        if (error instanceof Error && error.name === 'AbortError') {
+          console.error(`Request timeout (attempt ${attempt + 1}):`, error.message);
+        } else if (error instanceof Error && error.message?.includes('401')) {
+          // Don't retry on auth errors
+          throw error;
+        } else {
+          console.error(`OpenAI call failed (attempt ${attempt + 1}):`, error instanceof Error ? error.message : String(error));
+        }
+
+        // Add exponential backoff with jitter
+        if (attempt < retries) {
+          const backoffMs = Math.min(1000 * Math.pow(2, attempt) + Math.random() * 1000, 5000);
+          await new Promise(resolve => setTimeout(resolve, backoffMs));
+        }
+      }
+    }
+
+    throw lastError || new Error('All OpenAI call attempts failed');
+  }
+
   // 1. AI-powered therapeutic guidance
   async generateTherapeuticGuidance(
     context: TherapeuticContext,
@@ -61,46 +165,28 @@ Generate 2-3 personalized therapeutic guidance suggestions in JSON format:
 
 Focus on ACT principles: psychological flexibility, acceptance, mindfulness, values clarification, and committed action.`;
 
-      // Add timeout and error handling for OpenAI calls
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
-      
-      try {
-        const response = await openai.chat.completions.create({
-          model: "gpt-4-turbo", // Use supported model for JSON mode
-          messages: [{ role: "user", content: prompt + "\n\nRespond in valid JSON format." }],
-          response_format: { type: "json_object" },
-        }, {
-          signal: controller.signal
-        });
-
-        clearTimeout(timeoutId);
-        const content = response.choices[0].message.content;
-        if (!content) throw new Error('No content received from AI');
-        
-        // Safe JSON parsing with validation
-        let result;
-        try {
-          result = JSON.parse(content);
-          if (!result.guidance || !Array.isArray(result.guidance)) {
-            throw new Error('Invalid AI response format');
+      const result = await this.robustOpenAICall(
+        [{ role: "user", content: prompt }],
+        {
+          requireJSON: true,
+          maxTokens: 800,
+          parseResult: (content: string) => {
+            const parsed = JSON.parse(content);
+            if (!parsed.guidance || !Array.isArray(parsed.guidance)) {
+              throw new Error('Invalid AI response format: missing guidance array');
+            }
+            return parsed;
           }
-        } catch (parseError) {
-          console.error('JSON parse error for therapeutic guidance:', parseError);
-          throw new Error('Invalid AI response format');
         }
-        
-        return result.guidance.map((g: any) => ({
-          ...g,
-          userId: context.userId,
-          chapterId: context.chapterId,
-          sectionId: context.sectionId,
-          personalizedFor: { context: g.personalizedFor || 'general guidance' }
-        }));
-        
-      } finally {
-        clearTimeout(timeoutId);
-      }
+      ) as { guidance: any[] };
+      
+      return result.guidance.map((g: any) => ({
+        ...g,
+        userId: context.userId,
+        chapterId: context.chapterId,
+        sectionId: context.sectionId,
+        personalizedFor: { context: g.personalizedFor || 'general guidance' }
+      }));
 
     } catch (error) {
       console.error('Error generating therapeutic guidance:', error);
@@ -135,15 +221,21 @@ Generate 2-3 progressive reflection prompts in JSON format:
 
 Make prompts progressively deeper, building on previous responses. Focus on ACT core processes.`;
 
-      const response = await openai.chat.completions.create({
-        model: "gpt-5",
-        messages: [{ role: "user", content: prompt }],
-        response_format: { type: "json_object" },
-      });
-
-      const content = response.choices[0].message.content;
-      if (!content) throw new Error('No content received from AI');
-      const result = JSON.parse(content);
+      const result = await this.robustOpenAICall(
+        [{ role: "user", content: prompt }],
+        {
+          requireJSON: true,
+          maxTokens: 800,
+          parseResult: (content: string) => {
+            const parsed = JSON.parse(content);
+            if (!parsed.prompts || !Array.isArray(parsed.prompts)) {
+              throw new Error('Invalid AI response format: missing prompts array');
+            }
+            return parsed;
+          }
+        }
+      ) as { prompts: any[] };
+      
       return result.prompts.map((p: any) => ({
         ...p,
         userId: context.userId,
@@ -186,15 +278,21 @@ Analyze patterns and generate insights in JSON format:
 
 Focus on psychological flexibility growth, behavioral patterns, and therapeutic progress.`;
 
-      const response = await openai.chat.completions.create({
-        model: "gpt-5",
-        messages: [{ role: "user", content: prompt }],
-        response_format: { type: "json_object" },
-      });
-
-      const content = response.choices[0].message.content;
-      if (!content) throw new Error('No content received from AI');
-      const result = JSON.parse(content);
+      const result = await this.robustOpenAICall(
+        [{ role: "user", content: prompt }],
+        {
+          requireJSON: true,
+          maxTokens: 1000,
+          parseResult: (content: string) => {
+            const parsed = JSON.parse(content);
+            if (!parsed.insights || !Array.isArray(parsed.insights)) {
+              throw new Error('Invalid AI response format: missing insights array');
+            }
+            return parsed;
+          }
+        }
+      ) as { insights: any[] };
+      
       return result.insights.map((i: any) => ({
         ...i,
         userId: context.userId,
@@ -235,15 +333,21 @@ Generate adaptive recommendations in JSON format:
 
 Focus on optimizing learning and therapeutic outcomes based on individual progress patterns.`;
 
-      const response = await openai.chat.completions.create({
-        model: "gpt-5",
-        messages: [{ role: "user", content: prompt }],
-        response_format: { type: "json_object" },
-      });
-
-      const content = response.choices[0].message.content;
-      if (!content) throw new Error('No content received from AI');
-      const result = JSON.parse(content);
+      const result = await this.robustOpenAICall(
+        [{ role: "user", content: prompt }],
+        {
+          requireJSON: true,
+          maxTokens: 1000,
+          parseResult: (content: string) => {
+            const parsed = JSON.parse(content);
+            if (!parsed.recommendations || !Array.isArray(parsed.recommendations)) {
+              throw new Error('Invalid AI response format: missing recommendations array');
+            }
+            return parsed;
+          }
+        }
+      ) as { recommendations: any[] };
+      
       return result.recommendations.map((r: any) => ({
         ...r,
         userId: context.userId,
@@ -265,16 +369,15 @@ Focus on optimizing learning and therapeutic outcomes based on individual progre
     conversationType: 'therapeutic_guidance' | 'crisis_support' | 'reflection' | 'goal_setting' = 'therapeutic_guidance'
   ): Promise<string> {
     try {
-      // Handle crisis support with special safety measures
-      if (conversationType === 'crisis_support') {
-        const lastMessage = messages[messages.length - 1]?.content || '';
-        const crisisKeywords = ['suicide', 'kill myself', 'end it all', 'hurt myself', 'self-harm', 'can\'t go on'];
-        const hasCrisisContent = crisisKeywords.some(keyword => 
-          lastMessage.toLowerCase().includes(keyword)
-        );
-        
-        if (hasCrisisContent) {
-          return `I'm very concerned about what you're sharing. Your safety is the most important thing right now. 
+      // CRITICAL SAFETY: Check for crisis keywords in ALL conversation types
+      const lastMessage = messages[messages.length - 1]?.content || '';
+      const crisisKeywords = ['suicide', 'kill myself', 'end it all', 'hurt myself', 'self-harm', 'can\'t go on', 'want to die', 'no point in living'];
+      const hasCrisisContent = crisisKeywords.some(keyword => 
+        lastMessage.toLowerCase().includes(keyword)
+      );
+      
+      if (hasCrisisContent) {
+        return `I'm very concerned about what you're sharing. Your safety is the most important thing right now. 
 
 Please reach out for immediate support:
 • National Suicide Prevention Lifeline: 988 or 1-800-273-8255
@@ -284,7 +387,6 @@ Please reach out for immediate support:
 You are valuable and your life matters. Professional crisis counselors are available 24/7 to help you through this difficult time. Please don't hesitate to reach out to them right now.
 
 While I'm here to support your therapeutic journey, I want to make sure you have access to the immediate, specialized help you deserve.`;
-        }
       }
 
       // Customize system prompt based on conversation type
@@ -319,7 +421,13 @@ User Context:
           systemPrompt += `\n\nTHERAPEUTIC GUIDANCE MODE: Provide general therapeutic support and guidance using ACT principles.`;
       }
 
-      systemPrompt += `\n\nGuidelines:
+      systemPrompt += `\n\nSAFETY GUIDELINES (ALWAYS ACTIVE):
+- IMMEDIATE SAFETY: If user mentions self-harm, suicide, or crisis, prioritize safety and recommend professional crisis resources
+- Never provide medical advice or diagnoses
+- Stay within therapeutic support boundaries
+- Encourage seeking professional help when appropriate
+
+THERAPEUTIC GUIDELINES:
 - Be warm, professional, and therapeutic
 - Ask thoughtful follow-up questions
 - Encourage self-reflection and mindfulness
@@ -336,24 +444,16 @@ User Context:
         }))
       ];
 
-      // Add timeout for conversation API calls
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout for conversations
+      const result = await this.robustOpenAICall(
+        conversationMessages.map(msg => ({ role: msg.role, content: msg.content })),
+        {
+          requireJSON: false,
+          maxTokens: 500,
+          timeoutMs: 15000 // Longer timeout for conversations
+        }
+      ) as string;
       
-      try {
-        const response = await openai.chat.completions.create({
-          model: "gpt-4-turbo", // Use supported model
-          messages: conversationMessages,
-          max_tokens: 500,
-        }, {
-          signal: controller.signal
-        });
-
-        clearTimeout(timeoutId);
-        return response.choices[0].message.content || 'I understand. Could you tell me more about what you\'re experiencing?';
-      } finally {
-        clearTimeout(timeoutId);
-      }
+      return result || 'I understand. Could you tell me more about what you\'re experiencing?';
 
     } catch (error) {
       console.error('Error processing conversation:', error);
@@ -368,9 +468,8 @@ User Context:
     emotional_state: string;
   }> {
     try {
-      const response = await openai.chat.completions.create({
-        model: "gpt-5",
-        messages: [
+      const result = await this.robustOpenAICall(
+        [
           {
             role: "system",
             content: "You are a sentiment analysis expert specializing in therapeutic contexts. Analyze emotional state and provide supportive insights."
@@ -380,12 +479,20 @@ User Context:
             content: `Analyze the emotional sentiment and therapeutic state of this text: "${text}". Respond in JSON format: { "rating": 1-5, "confidence": 0-1, "emotional_state": "description" }`
           }
         ],
-        response_format: { type: "json_object" },
-      });
-
-      const content = response.choices[0].message.content;
-      if (!content) return { rating: 3, confidence: 0.5, emotional_state: 'neutral' };
-      return JSON.parse(content);
+        {
+          requireJSON: true,
+          maxTokens: 150,
+          parseResult: (content: string) => {
+            const parsed = JSON.parse(content);
+            if (typeof parsed.rating !== 'number' || typeof parsed.confidence !== 'number' || typeof parsed.emotional_state !== 'string') {
+              throw new Error('Invalid AI response format: missing required sentiment fields');
+            }
+            return parsed;
+          }
+        }
+      ) as { rating: number; confidence: number; emotional_state: string };
+      
+      return result;
     } catch (error) {
       console.error('Error analyzing sentiment:', error);
       return { rating: 3, confidence: 0.5, emotional_state: 'neutral' };
@@ -413,13 +520,15 @@ Create a concise summary highlighting:
 
 Keep it professional and therapeutic in tone.`;
 
-      const response = await openai.chat.completions.create({
-        model: "gpt-5",
-        messages: [{ role: "user", content: prompt }],
-        max_tokens: 300,
-      });
-
-      return response.choices[0].message.content || 'Session completed with meaningful therapeutic engagement.';
+      const result = await this.robustOpenAICall(
+        [{ role: "user", content: prompt }],
+        {
+          requireJSON: false,
+          maxTokens: 300
+        }
+      ) as string;
+      
+      return result || 'Session completed with meaningful therapeutic engagement.';
 
     } catch (error) {
       console.error('Error generating session summary:', error);
