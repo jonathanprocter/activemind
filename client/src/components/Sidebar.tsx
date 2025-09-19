@@ -42,7 +42,7 @@ const chapterIcons = {
 
 export default function Sidebar({ chapters, currentChapterId }: SidebarProps) {
   const [location] = useLocation();
-  
+
   const completedChapters = chapters.filter(c => c.completionRate === 100).length;
   const overallProgress = chapters.length > 0 ? Math.round((completedChapters / chapters.length) * 100) : 0;
 
@@ -80,7 +80,7 @@ export default function Sidebar({ chapters, currentChapterId }: SidebarProps) {
               <CheckCircle className="w-4 h-4 text-primary" />
             </a>
           </Link>
-          
+
           <Link href="/assessment">
             <a className={`flex items-center justify-between p-3 rounded-lg transition-colors ${
               isActive('/assessment') 
@@ -99,7 +99,7 @@ export default function Sidebar({ chapters, currentChapterId }: SidebarProps) {
             const IconComponent = chapterIcons[chapter.id as keyof typeof chapterIcons] || Home;
             const isCurrentChapter = chapter.id === currentChapterId;
             const chapterPath = `/chapter/${chapter.id}`;
-            
+
             return (
               <Link key={chapter.id} href={chapterPath}>
                 <a className={`flex items-center justify-between p-3 rounded-lg transition-colors ${
