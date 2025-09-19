@@ -27,9 +27,6 @@ export default function Landing() {
             >
               Start Your Journey
             </Button>
-            <p className="text-sm text-muted-foreground">
-              Free • Evidence-based • Self-paced
-            </p>
           </div>
         </div>
 
@@ -113,9 +110,6 @@ export default function Landing() {
           <CardContent className="pt-6">
             <div className="text-center">
               <h3 className="font-semibold text-accent mb-2">Important Notice</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                This is a self-help tool and educational resource. It is not a replacement for professional therapy or medical treatment.
-              </p>
               <div className="space-y-2 text-xs text-muted-foreground">
                 <p>If you're experiencing a crisis, please contact:</p>
                 <p>National Suicide Prevention Lifeline: 988</p>
