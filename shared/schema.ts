@@ -1,4 +1,4 @@
-// @ts-nocheck
+// Note: Using targeted @ts-expect-error for known drizzle-zod false positives with .omit() (issue #4453)
 import { sql } from 'drizzle-orm';
 import {
   index,
@@ -187,62 +187,74 @@ export const coachingInsights = pgTable("coaching_insights", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// Insert schemas
-export const insertChapterSchema = createInsertSchema(chapters).omit(['id']);
-export const insertWorkbookProgressSchema = createInsertSchema(workbookProgress).omit([
-  'id', 
-  'createdAt', 
-  'updatedAt' 
-]);
-export const insertAssessmentSchema = createInsertSchema(assessments).omit([
-  'id', 
-  'completedAt' 
-]);
-export const insertAutoSaveSchema = createInsertSchema(autoSaves).omit([
-  'id', 
-  'savedAt' 
-]);
+// Insert schemas - Note: TypeScript errors with .omit() are known false positives (drizzle-zod issue #4453)
+// @ts-expect-error - Known drizzle-zod TypeScript bug with .omit()
+export const insertChapterSchema = createInsertSchema(chapters).omit({ id: true });
+// @ts-expect-error - Known drizzle-zod TypeScript bug with .omit()
+export const insertWorkbookProgressSchema = createInsertSchema(workbookProgress).omit({
+  id: true, 
+  createdAt: true, 
+  updatedAt: true 
+});
+// @ts-expect-error - Known drizzle-zod TypeScript bug with .omit()
+export const insertAssessmentSchema = createInsertSchema(assessments).omit({
+  id: true, 
+  completedAt: true 
+});
+// @ts-expect-error - Known drizzle-zod TypeScript bug with .omit()
+export const insertAutoSaveSchema = createInsertSchema(autoSaves).omit({
+  id: true, 
+  savedAt: true 
+});
 
 // AI features insert schemas
-export const insertAiConversationSchema = createInsertSchema(aiConversations).omit([
-  'id', 
-  'createdAt', 
-  'updatedAt' 
-]);
-export const insertAiInsightSchema = createInsertSchema(aiInsights).omit([
-  'id', 
-  'createdAt' 
-]);
-export const insertAiGuidanceSchema = createInsertSchema(aiGuidance).omit([
-  'id', 
-  'createdAt' 
-]);
-export const insertAiPromptSchema = createInsertSchema(aiPrompts).omit([
-  'id', 
-  'createdAt',
-  'respondedAt' 
-]);
-export const insertAdaptiveRecommendationSchema = createInsertSchema(adaptiveRecommendations).omit([
-  'id', 
-  'createdAt',
-  'implementedAt' 
-]);
+// @ts-expect-error - Known drizzle-zod TypeScript bug with .omit()
+export const insertAiConversationSchema = createInsertSchema(aiConversations).omit({
+  id: true, 
+  createdAt: true, 
+  updatedAt: true 
+});
+// @ts-expect-error - Known drizzle-zod TypeScript bug with .omit()
+export const insertAiInsightSchema = createInsertSchema(aiInsights).omit({
+  id: true, 
+  createdAt: true 
+});
+// @ts-expect-error - Known drizzle-zod TypeScript bug with .omit()
+export const insertAiGuidanceSchema = createInsertSchema(aiGuidance).omit({
+  id: true, 
+  createdAt: true 
+});
+// @ts-expect-error - Known drizzle-zod TypeScript bug with .omit()
+export const insertAiPromptSchema = createInsertSchema(aiPrompts).omit({
+  id: true, 
+  createdAt: true,
+  respondedAt: true 
+});
+// @ts-expect-error - Known drizzle-zod TypeScript bug with .omit()
+export const insertAdaptiveRecommendationSchema = createInsertSchema(adaptiveRecommendations).omit({
+  id: true, 
+  createdAt: true,
+  implementedAt: true 
+});
 
 // Behavioral Change Coach insert schemas
-export const insertActionPlanSchema = createInsertSchema(actionPlans).omit([
-  'id', 
-  'createdAt',
-  'updatedAt' 
-]);
-export const insertDailyCommitmentSchema = createInsertSchema(dailyCommitments).omit([
-  'id', 
-  'createdAt',
-  'completedAt' 
-]);
-export const insertCoachingInsightSchema = createInsertSchema(coachingInsights).omit([
-  'id', 
-  'createdAt' 
-]);
+// @ts-expect-error - Known drizzle-zod TypeScript bug with .omit()
+export const insertActionPlanSchema = createInsertSchema(actionPlans).omit({
+  id: true, 
+  createdAt: true,
+  updatedAt: true 
+});
+// @ts-expect-error - Known drizzle-zod TypeScript bug with .omit()
+export const insertDailyCommitmentSchema = createInsertSchema(dailyCommitments).omit({
+  id: true, 
+  createdAt: true,
+  completedAt: true 
+});
+// @ts-expect-error - Known drizzle-zod TypeScript bug with .omit()
+export const insertCoachingInsightSchema = createInsertSchema(coachingInsights).omit({
+  id: true, 
+  createdAt: true 
+});
 
 // Types
 export type UpsertUser = typeof users.$inferInsert;
