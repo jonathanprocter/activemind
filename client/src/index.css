@@ -99,6 +99,23 @@
     box-shadow: 0 8px 24px hsl(215 15% 25% / 0.12);
   }
   
+  /* Enhanced card backgrounds */
+  .bg-enhanced-gradient {
+    background: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(var(--muted)) 100%);
+  }
+  
+  .bg-primary-gradient {
+    background: linear-gradient(135deg, hsl(var(--primary) / 0.1) 0%, hsl(var(--accent) / 0.1) 100%);
+  }
+  
+  .shadow-enhanced {
+    box-shadow: 0 10px 40px hsl(215 15% 25% / 0.15), 0 4px 12px hsl(215 15% 25% / 0.1);
+  }
+  
+  .shadow-elevated {
+    box-shadow: 0 20px 60px hsl(215 15% 25% / 0.2), 0 8px 25px hsl(215 15% 25% / 0.15);
+  }
+  
   .text-natural-accent {
     @apply text-accent;
   }
