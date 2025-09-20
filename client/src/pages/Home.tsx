@@ -6,7 +6,7 @@ import Sidebar from "@/components/Sidebar";
 import ProgressBar from "@/components/ProgressBar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Download, Play, Clock, FileText, TrendingUp } from "lucide-react";
+import { Download, Play, Clock, FileText, TrendingUp, Brain, Target } from "lucide-react";
 import { exportToPDF } from "@/lib/pdfExport";
 import { useState } from "react";
 import type { Chapter, WorkbookProgress, Assessment } from "@shared/schema";
@@ -280,6 +280,49 @@ export default function Home() {
                   </Card>
                 </div>
               </div>
+
+              {/* AI-Powered Tools Section */}
+              {hasStartedJourney && (
+                <div className="mb-8">
+                  <h2 className="text-2xl font-semibold text-foreground mb-4">AI-Powered Tools</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <Card className="card-hover bg-gradient-to-br from-primary/5 to-accent/5 border-primary/20 hover:shadow-lg transition-all">
+                      <CardHeader>
+                        <CardTitle className="flex items-center space-x-2">
+                          <Brain className="w-5 h-5 text-primary" />
+                          <span>Personal Change Coach</span>
+                          <div className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full font-medium">
+                            AI-POWERED
+                          </div>
+                        </CardTitle>
+                        <CardDescription>
+                          Transform your values into committed action with personalized AI guidance, daily accountability, and progress insights.
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-3">
+                          <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                            <div className="flex items-center space-x-1">
+                              <Target className="w-4 h-4" />
+                              <span>Action Plans</span>
+                            </div>
+                            <div className="flex items-center space-x-1">
+                              <Clock className="w-4 h-4" />
+                              <span>Daily Commitments</span>
+                            </div>
+                          </div>
+                          <Link href="/coach">
+                            <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90" data-testid="button-ai-coach">
+                              <Brain className="w-4 h-4 mr-2" />
+                              Start Your Change Journey
+                            </Button>
+                          </Link>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </div>
+              )}
 
               {/* Chapter Grid */}
               <div className="mb-8">

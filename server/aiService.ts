@@ -8,7 +8,10 @@ import type {
   AiPrompt, 
   AdaptiveRecommendation,
   Assessment,
-  WorkbookProgress 
+  WorkbookProgress,
+  ActionPlan,
+  DailyCommitment,
+  CoachingInsight
 } from "@shared/schema";
 
 // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
@@ -722,6 +725,295 @@ Keep it professional and therapeutic in tone.`;
     } catch (error) {
       console.error('Error generating session summary:', error);
       return 'Session completed successfully.';
+    }
+  }
+
+  // ============ BEHAVIORAL CHANGE COACH METHODS ============
+
+  // Create AI-powered action plan based on user's goal and value
+  async createActionPlan(
+    goal: string,
+    value: string,
+    userContext: TherapeuticContext
+  ): Promise<{
+    specificActions: string[];
+    timeframe: string;
+    barriers: string[];
+    strategies: string[];
+    dailyCommitment: string;
+  }> {
+    try {
+      const prompt = `As an ACT therapist, create a comprehensive action plan for this goal:
+
+Goal: ${goal}
+Core Value: ${value}
+
+Based on ACT principles, generate an action plan with:
+
+1. 3-5 specific, measurable actions
+2. Realistic timeframe 
+3. 3-4 potential barriers
+4. 3-4 evidence-based strategies to overcome barriers
+5. One daily commitment (small, manageable action)
+
+Focus on psychological flexibility, values-based action, and committed behavior change.
+
+Return as JSON with this exact structure:
+{
+  "specificActions": ["action1", "action2", ...],
+  "timeframe": "timeframe description",
+  "barriers": ["barrier1", "barrier2", ...],
+  "strategies": ["strategy1", "strategy2", ...],
+  "dailyCommitment": "specific daily action"
+}`;
+
+      const result = await this.robustOpenAICall(
+        [{ role: "user", content: prompt }],
+        {
+          requireJSON: true,
+          maxTokens: 1000,
+          parseResult: (content: string) => {
+            const parsed = JSON.parse(content);
+            if (!parsed.specificActions || !parsed.timeframe || !parsed.barriers || 
+                !parsed.strategies || !parsed.dailyCommitment) {
+              throw new Error('Invalid action plan format');
+            }
+            return parsed;
+          }
+        }
+      ) as {
+        specificActions: string[];
+        timeframe: string;
+        barriers: string[];
+        strategies: string[];
+        dailyCommitment: string;
+      };
+
+      return result;
+
+    } catch (error) {
+      console.error('Error creating action plan:', error);
+      return {
+        specificActions: [
+          `Take one small step toward ${goal} each day`,
+          `Reflect on how this aligns with ${value}`,
+          "Notice and accept difficult emotions that arise",
+          "Practice mindful awareness during the process"
+        ],
+        timeframe: "2-4 weeks",
+        barriers: [
+          "Perfectionism and fear of failure",
+          "Old habits and automatic behaviors",
+          "Emotional avoidance",
+          "Lack of motivation"
+        ],
+        strategies: [
+          "Use the 'good enough' principle",
+          "Start with tiny, manageable steps",
+          "Practice acceptance of difficult feelings",
+          "Connect daily actions to core values"
+        ],
+        dailyCommitment: `Spend 5 minutes each morning connecting with ${value} and taking one small action toward ${goal}`
+      };
+    }
+  }
+
+  // Generate personalized coaching insights based on user progress
+  async generateCoachingInsights(
+    actionPlans: ActionPlan[],
+    dailyCommitments: DailyCommitment[],
+    userContext: TherapeuticContext
+  ): Promise<Array<{
+    type: 'encouragement' | 'strategy' | 'adjustment' | 'celebration';
+    message: string;
+    actionable: boolean;
+    priority: 'high' | 'medium' | 'low';
+  }>> {
+    try {
+      const recentCommitments = dailyCommitments.slice(-7); // Last 7 days
+      const completionRate = recentCommitments.length > 0 
+        ? recentCommitments.filter(c => c.completed).length / recentCommitments.length 
+        : 0;
+
+      const prompt = `As an ACT therapist, analyze this user's behavioral change progress and provide 2-4 personalized coaching insights:
+
+ACTION PLANS:
+${JSON.stringify(actionPlans)}
+
+RECENT COMMITMENTS (last 7 days):
+${JSON.stringify(recentCommitments)}
+
+COMPLETION RATE: ${Math.round(completionRate * 100)}%
+
+Generate insights that:
+1. Acknowledge progress and effort
+2. Identify patterns in behavior/completion
+3. Provide specific, actionable guidance
+4. Align with ACT principles (acceptance, mindfulness, values-based action)
+5. Encourage psychological flexibility
+
+Return as JSON array with this structure:
+[{
+  "type": "encouragement|strategy|adjustment|celebration",
+  "message": "personalized insight message",
+  "actionable": true/false,
+  "priority": "high|medium|low"
+}]`;
+
+      const result = await this.robustOpenAICall(
+        [{ role: "user", content: prompt }],
+        {
+          requireJSON: true,
+          maxTokens: 800,
+          parseResult: (content: string) => {
+            const parsed = JSON.parse(content);
+            if (!Array.isArray(parsed)) {
+              throw new Error('Expected array of insights');
+            }
+            return parsed;
+          }
+        }
+      ) as Array<{
+        type: 'encouragement' | 'strategy' | 'adjustment' | 'celebration';
+        message: string;
+        actionable: boolean;
+        priority: 'high' | 'medium' | 'low';
+      }>;
+
+      return result;
+
+    } catch (error) {
+      console.error('Error generating coaching insights:', error);
+      
+      // Fallback insights based on completion rate
+      const recentCommitments = dailyCommitments.slice(-7);
+      const completionRate = recentCommitments.length > 0 
+        ? recentCommitments.filter(c => c.completed).length / recentCommitments.length 
+        : 0;
+
+      if (completionRate >= 0.8) {
+        return [{
+          type: 'celebration',
+          message: 'You\'re showing incredible commitment to your values! This consistency is building the foundation for lasting change. Keep honoring your commitments with this same dedication.',
+          actionable: false,
+          priority: 'high'
+        }];
+      } else if (completionRate >= 0.5) {
+        return [{
+          type: 'encouragement',
+          message: 'You\'re making steady progress! Remember, each commitment you keep is a step toward your valued life. What matters most is showing up consistently, not perfection.',
+          actionable: false,
+          priority: 'medium'
+        }];
+      } else {
+        return [{
+          type: 'strategy',
+          message: 'It might help to make your daily commitments smaller and more specific. What\'s the tiniest step you could take that would still feel meaningful?',
+          actionable: true,
+          priority: 'high'
+        }];
+      }
+    }
+  }
+
+  // Generate daily commitment for action plan
+  async generateDailyCommitment(
+    actionPlan: ActionPlan,
+    previousCommitments: DailyCommitment[]
+  ): Promise<string> {
+    try {
+      const prompt = `Based on this action plan, generate a specific daily commitment for today:
+
+ACTION PLAN:
+Goal: ${actionPlan.goal}
+Value: ${actionPlan.value}
+Daily Commitment: ${actionPlan.dailyCommitment}
+
+RECENT COMMITMENTS:
+${JSON.stringify(previousCommitments.slice(-3))}
+
+Create a daily commitment that:
+1. Is specific and actionable
+2. Takes 5-15 minutes to complete
+3. Connects to the core value
+4. Builds on previous commitments
+5. Is achievable given recent patterns
+
+Return just the commitment text, nothing else.`;
+
+      const result = await this.robustOpenAICall(
+        [{ role: "user", content: prompt }],
+        {
+          requireJSON: false,
+          maxTokens: 150
+        }
+      ) as string;
+
+      return result || actionPlan.dailyCommitment;
+
+    } catch (error) {
+      console.error('Error generating daily commitment:', error);
+      return actionPlan.dailyCommitment;
+    }
+  }
+
+  // Analyze commitment completion patterns and suggest adjustments
+  async analyzeCommitmentPatterns(
+    dailyCommitments: DailyCommitment[]
+  ): Promise<{
+    insights: string[];
+    recommendations: string[];
+    adjustments: string[];
+  }> {
+    try {
+      const prompt = `Analyze these daily commitment patterns and provide therapeutic insights:
+
+COMMITMENTS DATA:
+${JSON.stringify(dailyCommitments)}
+
+Analyze:
+1. Completion patterns and trends
+2. Difficulty vs. satisfaction correlations
+3. Time-based patterns (if any)
+4. Reflection themes
+
+Provide insights and recommendations for improvement based on ACT principles.
+
+Return as JSON:
+{
+  "insights": ["pattern insight 1", "pattern insight 2", ...],
+  "recommendations": ["recommendation 1", "recommendation 2", ...],
+  "adjustments": ["suggested adjustment 1", "suggested adjustment 2", ...]
+}`;
+
+      const result = await this.robustOpenAICall(
+        [{ role: "user", content: prompt }],
+        {
+          requireJSON: true,
+          maxTokens: 600,
+          parseResult: (content: string) => {
+            const parsed = JSON.parse(content);
+            if (!parsed.insights || !parsed.recommendations || !parsed.adjustments) {
+              throw new Error('Invalid analysis format');
+            }
+            return parsed;
+          }
+        }
+      ) as {
+        insights: string[];
+        recommendations: string[];
+        adjustments: string[];
+      };
+
+      return result;
+
+    } catch (error) {
+      console.error('Error analyzing commitment patterns:', error);
+      return {
+        insights: ["Your commitment journey is unique and valuable"],
+        recommendations: ["Focus on consistency over perfection"],
+        adjustments: ["Consider adjusting commitment size based on your energy levels"]
+      };
     }
   }
 }

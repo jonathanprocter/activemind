@@ -9,6 +9,9 @@ import {
   aiGuidance,
   aiPrompts,
   adaptiveRecommendations,
+  actionPlans,
+  dailyCommitments,
+  coachingInsights,
   type User, 
   type UpsertUser,
   type Chapter,
@@ -27,7 +30,13 @@ import {
   type AiPrompt,
   type InsertAiPrompt,
   type AdaptiveRecommendation,
-  type InsertAdaptiveRecommendation
+  type InsertAdaptiveRecommendation,
+  type ActionPlan,
+  type InsertActionPlan,
+  type DailyCommitment,
+  type InsertDailyCommitment,
+  type CoachingInsight,
+  type InsertCoachingInsight
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc } from "drizzle-orm";
@@ -68,6 +77,21 @@ export interface IStorage {
   getAiConversation(userId: string, sessionId: string): Promise<AiConversation | undefined>;
   getAiConversations(userId: string): Promise<AiConversation[]>;
   updateAiConversation(sessionId: string, updates: Partial<AiConversation>): Promise<void>;
+  
+  // Behavioral Change Coach
+  createActionPlan(actionPlan: InsertActionPlan): Promise<ActionPlan>;
+  getActionPlans(userId: string): Promise<ActionPlan[]>;
+  getActionPlan(id: string): Promise<ActionPlan | undefined>;
+  updateActionPlanProgress(actionPlanId: string): Promise<void>;
+  
+  createDailyCommitment(commitment: InsertDailyCommitment): Promise<DailyCommitment>;
+  getDailyCommitments(userId: string, date: string): Promise<DailyCommitment[]>;
+  getAllDailyCommitments(userId: string, days: number): Promise<DailyCommitment[]>;
+  getDailyCommitment(id: string): Promise<DailyCommitment | undefined>;
+  completeCommitment(id: string, updates: Partial<DailyCommitment>): Promise<void>;
+  
+  createCoachingInsight(insight: InsertCoachingInsight): Promise<CoachingInsight>;
+  getCoachingInsights(userId: string): Promise<CoachingInsight[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -402,6 +426,125 @@ export class DatabaseStorage implements IStorage {
       .update(aiConversations)
       .set({ ...updates, updatedAt: new Date() })
       .where(eq(aiConversations.sessionId, sessionId));
+  }
+
+  // ============ BEHAVIORAL CHANGE COACH METHODS ============
+
+  // Action Plans Methods
+  async createActionPlan(actionPlan: InsertActionPlan): Promise<ActionPlan> {
+    const [savedPlan] = await db
+      .insert(actionPlans)
+      .values(actionPlan)
+      .returning();
+    return savedPlan;
+  }
+
+  async getActionPlans(userId: string): Promise<ActionPlan[]> {
+    return await db
+      .select()
+      .from(actionPlans)
+      .where(eq(actionPlans.userId, userId))
+      .orderBy(desc(actionPlans.createdAt));
+  }
+
+  async getActionPlan(id: string): Promise<ActionPlan | undefined> {
+    const [plan] = await db
+      .select()
+      .from(actionPlans)
+      .where(eq(actionPlans.id, id));
+    return plan || undefined;
+  }
+
+  async updateActionPlanProgress(actionPlanId: string): Promise<void> {
+    // Calculate progress based on completed daily commitments
+    const completedCommitments = await db
+      .select()
+      .from(dailyCommitments)
+      .where(and(
+        eq(dailyCommitments.actionPlanId, actionPlanId),
+        eq(dailyCommitments.completed, true)
+      ));
+
+    const totalCommitments = await db
+      .select()
+      .from(dailyCommitments)
+      .where(eq(dailyCommitments.actionPlanId, actionPlanId));
+
+    const progress = totalCommitments.length > 0 
+      ? Math.round((completedCommitments.length / totalCommitments.length) * 100)
+      : 0;
+
+    await db
+      .update(actionPlans)
+      .set({ progress, updatedAt: new Date() })
+      .where(eq(actionPlans.id, actionPlanId));
+  }
+
+  // Daily Commitments Methods
+  async createDailyCommitment(commitment: InsertDailyCommitment): Promise<DailyCommitment> {
+    const [savedCommitment] = await db
+      .insert(dailyCommitments)
+      .values(commitment)
+      .returning();
+    return savedCommitment;
+  }
+
+  async getDailyCommitments(userId: string, date: string): Promise<DailyCommitment[]> {
+    return await db
+      .select()
+      .from(dailyCommitments)
+      .where(and(
+        eq(dailyCommitments.userId, userId),
+        eq(dailyCommitments.date, date)
+      ))
+      .orderBy(desc(dailyCommitments.createdAt));
+  }
+
+  async getAllDailyCommitments(userId: string, days: number): Promise<DailyCommitment[]> {
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - days);
+    const cutoffString = cutoffDate.toISOString().split('T')[0];
+
+    return await db
+      .select()
+      .from(dailyCommitments)
+      .where(and(
+        eq(dailyCommitments.userId, userId),
+        // Use comparison for date strings in YYYY-MM-DD format
+      ))
+      .orderBy(desc(dailyCommitments.date));
+  }
+
+  async getDailyCommitment(id: string): Promise<DailyCommitment | undefined> {
+    const [commitment] = await db
+      .select()
+      .from(dailyCommitments)
+      .where(eq(dailyCommitments.id, id));
+    return commitment || undefined;
+  }
+
+  async completeCommitment(id: string, updates: Partial<DailyCommitment>): Promise<void> {
+    await db
+      .update(dailyCommitments)
+      .set({ ...updates, completed: true })
+      .where(eq(dailyCommitments.id, id));
+  }
+
+  // Coaching Insights Methods
+  async createCoachingInsight(insight: InsertCoachingInsight): Promise<CoachingInsight> {
+    const [savedInsight] = await db
+      .insert(coachingInsights)
+      .values(insight)
+      .returning();
+    return savedInsight;
+  }
+
+  async getCoachingInsights(userId: string): Promise<CoachingInsight[]> {
+    return await db
+      .select()
+      .from(coachingInsights)
+      .where(eq(coachingInsights.userId, userId))
+      .orderBy(desc(coachingInsights.priority), desc(coachingInsights.createdAt));
   }
 }
 

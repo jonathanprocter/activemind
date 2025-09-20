@@ -595,6 +595,146 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ============ BEHAVIORAL CHANGE COACH ROUTES ============
+
+  // Create action plan
+  app.post('/api/ai/create-action-plan', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { goal, value } = req.body;
+      
+      if (!goal || !value) {
+        return res.status(400).json({ message: "Goal and value are required" });
+      }
+      
+      const context = await buildTherapeuticContext(userId);
+      const actionPlanData = await aiService.createActionPlan(goal, value, context);
+      
+      const actionPlan = await storage.createActionPlan({
+        userId,
+        goal,
+        value,
+        ...actionPlanData
+      });
+      
+      // Create initial daily commitment
+      const today = new Date().toISOString().split('T')[0];
+      await storage.createDailyCommitment({
+        actionPlanId: actionPlan.id,
+        userId,
+        date: today,
+        commitment: actionPlanData.dailyCommitment
+      });
+      
+      res.json(actionPlan);
+    } catch (error) {
+      console.error("Error creating action plan:", error instanceof Error ? error.message : String(error));
+      res.status(500).json({ message: "Failed to create action plan" });
+    }
+  });
+
+  // Get user's action plans
+  app.get('/api/ai/action-plans', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const actionPlans = await storage.getActionPlans(userId);
+      res.json(actionPlans);
+    } catch (error) {
+      console.error("Error fetching action plans:", error);
+      res.status(500).json({ message: "Failed to fetch action plans" });
+    }
+  });
+
+  // Get daily commitments
+  app.get('/api/ai/daily-commitments', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const today = new Date().toISOString().split('T')[0];
+      const dailyCommitments = await storage.getDailyCommitments(userId, today);
+      res.json(dailyCommitments);
+    } catch (error) {
+      console.error("Error fetching daily commitments:", error);
+      res.status(500).json({ message: "Failed to fetch daily commitments" });
+    }
+  });
+
+  // Complete daily commitment
+  app.post('/api/ai/complete-commitment', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { commitmentId, reflection, difficulty, satisfaction } = req.body;
+      
+      if (!commitmentId) {
+        return res.status(400).json({ message: "Commitment ID is required" });
+      }
+      
+      await storage.completeCommitment(commitmentId, {
+        reflection,
+        difficulty: parseInt(difficulty),
+        satisfaction: parseInt(satisfaction),
+        completedAt: new Date()
+      });
+      
+      // Update action plan progress
+      const commitment = await storage.getDailyCommitment(commitmentId);
+      if (commitment) {
+        await storage.updateActionPlanProgress(commitment.actionPlanId);
+      }
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error completing commitment:", error instanceof Error ? error.message : String(error));
+      res.status(500).json({ message: "Failed to complete commitment" });
+    }
+  });
+
+  // Get coaching insights
+  app.get('/api/ai/coaching-insights', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      // Get user's action plans and recent commitments
+      const [actionPlans, dailyCommitments] = await Promise.all([
+        storage.getActionPlans(userId),
+        storage.getAllDailyCommitments(userId, 30) // Last 30 days
+      ]);
+      
+      // Check if we have existing insights from today
+      const existingInsights = await storage.getCoachingInsights(userId);
+      const today = new Date().toISOString().split('T')[0];
+      const todayInsights = existingInsights.filter(insight => 
+        insight.createdAt && insight.createdAt.toISOString().split('T')[0] === today
+      );
+      
+      if (todayInsights.length > 0) {
+        return res.json(todayInsights);
+      }
+      
+      // Generate new insights if we have enough data
+      if (actionPlans.length > 0) {
+        const context = await buildTherapeuticContext(userId);
+        const aiInsights = await aiService.generateCoachingInsights(actionPlans, dailyCommitments, context);
+        
+        // Save insights to database
+        const savedInsights = [];
+        for (const insight of aiInsights) {
+          const saved = await storage.createCoachingInsight({
+            userId,
+            ...insight
+          });
+          savedInsights.push(saved);
+        }
+        
+        res.json(savedInsights);
+      } else {
+        res.json([]);
+      }
+    } catch (error) {
+      console.error("Error fetching coaching insights:", error);
+      res.status(500).json({ message: "Failed to fetch coaching insights" });
+    }
+  });
+
   // Utility function to build therapeutic context with data minimization
   async function buildTherapeuticContext(userId: string, chapterId?: number, sectionId?: string, userResponses?: any) {
     try {
