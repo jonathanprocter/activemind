@@ -19,8 +19,8 @@ export default function PostAssessment() {
     enabled: !!user,
   });
 
-  const preAssessment = (assessments as any[]).find(a => a.assessmentType === 'pre');
-  const postAssessment = (assessments as any[]).find(a => a.assessmentType === 'post');
+  const preAssessment = assessments.find(a => a.assessmentType === 'pre');
+  const postAssessment = assessments.find(a => a.assessmentType === 'post');
 
   // Redirect to home if not authenticated
   useEffect(() => {
