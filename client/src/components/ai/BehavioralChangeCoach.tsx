@@ -2,11 +2,12 @@ import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Target, Calendar, CheckCircle, TrendingUp, Heart, Brain } from 'lucide-react';
+import { Target, Calendar, CheckCircle, TrendingUp, Heart, Brain, MessageCircle, Send } from 'lucide-react';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -322,13 +323,27 @@ export function BehavioralChangeCoach() {
                     <div key={i} className="animate-pulse h-20 bg-muted rounded"></div>
                   ))}
                 </div>
-              ) : (
-                <div className="space-y-4">
+              ) : coachingInsights.length > 0 ? (
+                <div className="space-y-4 mb-6">
                   {coachingInsights.map((insight: CoachingInsight, index: number) => (
                     <InsightCard key={index} insight={insight} />
                   ))}
                 </div>
+              ) : (
+                <div className="text-center py-6 text-muted-foreground mb-6">
+                  <Brain className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                  <p>Create action plans and complete commitments to unlock AI insights!</p>
+                </div>
               )}
+              
+              {/* AI Chat Interface */}
+              <div className="border-t pt-6">
+                <h3 className="font-semibold mb-4 flex items-center">
+                  <MessageCircle className="w-5 h-5 mr-2" />
+                  Ask Your AI Coach
+                </h3>
+                <AiChatInterface />
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -537,5 +552,110 @@ function InsightCard({ insight }: { insight: CoachingInsight }) {
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+// AI Chat Interface Component
+function AiChatInterface() {
+  const [message, setMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [chatHistory, setChatHistory] = useState<Array<{role: 'user' | 'assistant', content: string}>>([]);
+  const { toast } = useToast();
+
+  const sendMessage = async () => {
+    if (!message.trim() || isLoading) return;
+
+    const userMessage = message.trim();
+    setMessage('');
+    setIsLoading(true);
+    
+    // Add user message to chat
+    setChatHistory(prev => [...prev, { role: 'user', content: userMessage }]);
+
+    try {
+      const response = await apiRequest('POST', '/api/ai/conversation', {
+        message: userMessage,
+        conversationType: 'therapeutic_guidance',
+        sessionId: 'behavioral-change-coach'
+      });
+      
+      // Add AI response to chat
+      const data = await response.json();
+      setChatHistory(prev => [...prev, { role: 'assistant', content: data.response }]);
+    } catch (error) {
+      console.error('Chat error:', error);
+      toast({
+        title: "Chat Error",
+        description: "Failed to get response from AI coach. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Chat Messages */}
+      {chatHistory.length > 0 && (
+        <div className="max-h-96 overflow-y-auto space-y-3 border rounded-lg p-4 bg-muted/20">
+          {chatHistory.map((msg, index) => (
+            <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+              <div className={`max-w-[80%] p-3 rounded-lg ${
+                msg.role === 'user' 
+                  ? 'bg-primary text-primary-foreground' 
+                  : 'bg-background border border-border'
+              }`}>
+                <p className="text-sm">{msg.content}</p>
+              </div>
+            </div>
+          ))}
+          {isLoading && (
+            <div className="flex justify-start">
+              <div className="bg-background border border-border p-3 rounded-lg">
+                <div className="flex items-center space-x-2">
+                  <div className="animate-pulse">AI is thinking...</div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Chat Input */}
+      <div className="flex space-x-2">
+        <Input
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          onKeyPress={handleKeyPress}
+          placeholder="Ask your AI coach for guidance, encouragement, or strategies..."
+          className="flex-1"
+          disabled={isLoading}
+          data-testid="input-ai-coach-message"
+        />
+        <Button 
+          onClick={sendMessage}
+          disabled={!message.trim() || isLoading}
+          size="icon"
+          data-testid="button-send-coach-message"
+        >
+          <Send className="w-4 h-4" />
+        </Button>
+      </div>
+      
+      {chatHistory.length === 0 && (
+        <div className="text-center py-6 text-muted-foreground">
+          <MessageCircle className="w-12 h-12 mx-auto mb-4 opacity-50" />
+          <p className="text-sm">Start a conversation with your AI coach for personalized guidance and support!</p>
+        </div>
+      )}
+    </div>
   );
 }
