@@ -249,6 +249,7 @@
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
+  isolation: isolate;
 }
 
 .btn-enhanced:hover {
@@ -271,7 +272,12 @@
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
   transition: left 0.5s ease;
   pointer-events: none;
-  z-index: -1;
+  z-index: 0;
+}
+
+.btn-enhanced > * {
+  position: relative;
+  z-index: 1;
 }
 
 .btn-enhanced:hover::before {
