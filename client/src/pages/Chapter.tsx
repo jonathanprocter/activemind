@@ -139,7 +139,7 @@ export default function Chapter() {
               ]}
               sectionId="acceptance-barriers"
               onSave={handleSaveProgress}
-              existingResponses={chapterProgress?.find(p => p.sectionId === 'acceptance-barriers')?.responses}
+              existingResponses={chapterProgress?.find(p => p.sectionId === 'acceptance-barriers')?.responses as Record<string, string>}
             />
             <ReflectionExercise
               title="Exercise 1.2: Situation Analysis"
@@ -152,7 +152,7 @@ export default function Chapter() {
               ]}
               sectionId="acceptance-situation"
               onSave={handleSaveProgress}
-              existingResponses={chapterProgress?.find(p => p.sectionId === 'acceptance-situation')?.responses}
+              existingResponses={chapterProgress?.find(p => p.sectionId === 'acceptance-situation')?.responses as Record<string, string>}
             />
           </div>
         );
@@ -171,7 +171,7 @@ export default function Chapter() {
               ]}
               sectionId="defusion-observation"
               onSave={handleSaveProgress}
-              existingResponses={chapterProgress?.find(p => p.sectionId === 'defusion-observation')?.responses}
+              existingResponses={chapterProgress?.find(p => p.sectionId === 'defusion-observation')?.responses as Record<string, string>}
             />
           </div>
         );
@@ -193,7 +193,7 @@ export default function Chapter() {
               ]}
               sectionId="present-moment-reflection"
               onSave={handleSaveProgress}
-              existingResponses={chapterProgress?.find(p => p.sectionId === 'present-moment-reflection')?.responses}
+              existingResponses={chapterProgress?.find(p => p.sectionId === 'present-moment-reflection')?.responses as Record<string, string>}
             />
           </div>
         );
@@ -212,7 +212,7 @@ export default function Chapter() {
               ]}
               sectionId="observer-self"
               onSave={handleSaveProgress}
-              existingResponses={chapterProgress?.find(p => p.sectionId === 'observer-self')?.responses}
+              existingResponses={chapterProgress?.find(p => p.sectionId === 'observer-self')?.responses as Record<string, string>}
             />
           </div>
         );
@@ -221,7 +221,7 @@ export default function Chapter() {
           <div className="space-y-8">
             <ValuesDartboard
               onSave={handleSaveProgress}
-              existingMarkers={chapterProgress?.find(p => p.sectionId === 'values-dartboard')?.responses?.markers}
+              existingMarkers={chapterProgress?.find(p => p.sectionId === 'values-dartboard')?.responses ? (chapterProgress?.find(p => p.sectionId === 'values-dartboard')?.responses as any)?.markers : undefined}
             />
             <ReflectionExercise
               title="Values Reflection"
@@ -234,7 +234,7 @@ export default function Chapter() {
               ]}
               sectionId="values-reflection"
               onSave={handleSaveProgress}
-              existingResponses={chapterProgress?.find(p => p.sectionId === 'values-reflection')?.responses}
+              existingResponses={chapterProgress?.find(p => p.sectionId === 'values-reflection')?.responses as Record<string, string>}
             />
           </div>
         );
@@ -253,7 +253,7 @@ export default function Chapter() {
               ]}
               sectionId="smart-goals"
               onSave={handleSaveProgress}
-              existingResponses={chapterProgress?.find(p => p.sectionId === 'smart-goals')?.responses}
+              existingResponses={chapterProgress?.find(p => p.sectionId === 'smart-goals')?.responses as Record<string, string>}
             />
           </div>
         );
@@ -272,7 +272,7 @@ export default function Chapter() {
               ]}
               sectionId="integration-reflection"
               onSave={handleSaveProgress}
-              existingResponses={chapterProgress?.find(p => p.sectionId === 'integration-reflection')?.responses}
+              existingResponses={chapterProgress?.find(p => p.sectionId === 'integration-reflection')?.responses as Record<string, string>}
             />
           </div>
         );
