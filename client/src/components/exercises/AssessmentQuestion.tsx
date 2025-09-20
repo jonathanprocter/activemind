@@ -62,9 +62,10 @@ export default function AssessmentQuestion({
                       aria-checked={currentAnswer === rating}
                       className={`w-10 h-10 rounded-full border-2 transition-all duration-200 flex items-center justify-center cursor-pointer select-none pointer-events-auto ${
                         currentAnswer === rating
-                          ? 'border-primary bg-primary text-primary-foreground shadow-md scale-105'
-                          : 'border-muted-foreground/30 hover:border-primary hover:shadow-md hover:scale-105 bg-background'
+                          ? 'border-blue-500 bg-blue-500 text-white shadow-lg scale-110'
+                          : 'border-gray-300 hover:border-blue-500 hover:shadow-md hover:scale-105 bg-white'
                       }`}
+                      data-selected={currentAnswer === rating}
                     >
                       <span className="text-sm font-semibold">{rating}</span>
                     </div>
