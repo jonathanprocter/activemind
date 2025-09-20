@@ -540,6 +540,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // 6. Contextual assistance for deeper exploration
+  app.post('/api/ai/contextual-assistance', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { chapterId, sectionId, questionText, currentResponse, analysisType } = req.body;
+      
+      const context = await buildTherapeuticContext(userId, chapterId, sectionId, { currentResponse });
+      const assistance = await aiService.generateContextualAssistance(context, questionText, currentResponse);
+      
+      res.json(assistance);
+    } catch (error) {
+      console.error("Error generating contextual assistance:", error instanceof Error ? error.message : String(error));
+      res.status(500).json({ message: "Failed to generate contextual assistance" });
+    }
+  });
+
+  // 7. Generate contextual questions about chapter material
+  app.post('/api/ai/contextual-questions', isAuthenticated, async (req: any, res) => {
+    try {
+      const { chapterId, chapterTitle, currentSection, questionCount } = req.body;
+      
+      const questions = await aiService.generateContextualQuestions(
+        chapterId, 
+        chapterTitle, 
+        currentSection, 
+        questionCount || 6
+      );
+      
+      res.json(questions);
+    } catch (error) {
+      console.error("Error generating contextual questions:", error instanceof Error ? error.message : String(error));
+      res.status(500).json({ message: "Failed to generate contextual questions" });
+    }
+  });
+
+  // 8. Answer questions about chapter material
+  app.post('/api/ai/material-questions', isAuthenticated, async (req: any, res) => {
+    try {
+      const { chapterId, chapterTitle, currentSection, question, conversationHistory } = req.body;
+      
+      const answer = await aiService.answerMaterialQuestion(
+        chapterId,
+        chapterTitle,
+        currentSection,
+        question,
+        conversationHistory || []
+      );
+      
+      res.json(answer);
+    } catch (error) {
+      console.error("Error answering material question:", error instanceof Error ? error.message : String(error));
+      res.status(500).json({ message: "Failed to answer material question" });
+    }
+  });
+
   // Utility function to build therapeutic context with data minimization
   async function buildTherapeuticContext(userId: string, chapterId?: number, sectionId?: string, userResponses?: any) {
     try {

@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { PenTool, Save, Check } from "lucide-react";
+import AiAssistance from "./AiAssistance";
+import AiQuestionInterface from "./AiQuestionInterface";
 
 interface ReflectionExerciseProps {
   title: string;
@@ -12,6 +14,8 @@ interface ReflectionExerciseProps {
   sectionId: string;
   onSave: (sectionId: string, responses: any, completed?: boolean) => void;
   existingResponses?: Record<string, string>;
+  chapterId?: number;
+  chapterTitle?: string;
 }
 
 export default function ReflectionExercise({
@@ -21,6 +25,8 @@ export default function ReflectionExercise({
   sectionId,
   onSave,
   existingResponses = {},
+  chapterId,
+  chapterTitle,
 }: ReflectionExerciseProps) {
   const [responses, setResponses] = useState<Record<string, string>>(existingResponses);
   const [hasChanges, setHasChanges] = useState(false);
@@ -53,11 +59,20 @@ export default function ReflectionExercise({
   return (
     <Card className="bg-card shadow-lg border border-border hover:shadow-xl transition-all">
       <CardHeader>
-        <div className="flex items-center space-x-3 mb-2">
-          <div className="w-10 h-10 bg-accent/10 rounded-full flex items-center justify-center">
-            <PenTool className="w-5 h-5 text-accent" />
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-accent/10 rounded-full flex items-center justify-center">
+              <PenTool className="w-5 h-5 text-accent" />
+            </div>
+            <CardTitle className="text-xl">{title}</CardTitle>
           </div>
-          <CardTitle className="text-xl">{title}</CardTitle>
+          {chapterId && chapterTitle && (
+            <AiQuestionInterface 
+              chapterId={chapterId}
+              chapterTitle={chapterTitle}
+              currentSection={title}
+            />
+          )}
         </div>
         <p className="text-muted-foreground">{description}</p>
       </CardHeader>
@@ -65,7 +80,7 @@ export default function ReflectionExercise({
         {questions.map((question, index) => {
           const key = `question_${index}`;
           return (
-            <div key={index} className="space-y-2">
+            <div key={index} className="space-y-2 animate-slide-in-up" style={{ animationDelay: `${index * 0.1}s` }}>
               <Label className="text-sm font-medium text-foreground">
                 {question}
               </Label>
@@ -73,9 +88,20 @@ export default function ReflectionExercise({
                 value={responses[key] || ''}
                 onChange={(e) => handleResponseChange(index, e.target.value)}
                 placeholder="Share your thoughts..."
-                className="min-h-[100px] resize-none focus:ring-2 focus:ring-primary focus:border-primary bg-input"
+                className="min-h-[100px] resize-none focus:ring-2 focus:ring-primary focus:border-primary bg-input form-field"
                 data-testid={`textarea-${sectionId}-${index}`}
               />
+              {chapterId && chapterTitle && (
+                <AiAssistance
+                  chapterId={chapterId}
+                  sectionId={sectionId}
+                  currentResponse={responses[key] || ''}
+                  questionText={question}
+                  onSuggestionApplied={(suggestion) => {
+                    handleResponseChange(index, suggestion);
+                  }}
+                />
+              )}
             </div>
           );
         })}

@@ -499,6 +499,195 @@ THERAPEUTIC GUIDELINES:
     }
   }
 
+  // 6. Contextual assistance for deeper exploration
+  async generateContextualQuestions(
+    chapterId: number,
+    chapterTitle: string,
+    currentSection?: string,
+    questionCount: number = 6
+  ): Promise<{ questions: any[] }> {
+    try {
+      const prompt = `You are an expert ACT therapist helping users understand chapter concepts through thoughtful questions.
+
+Chapter: ${chapterId} - ${chapterTitle}
+Current Section: ${currentSection || 'General chapter content'}
+
+Generate ${questionCount} contextual questions that help users:
+1. Understand key concepts
+2. Apply techniques in their life  
+3. Explore personal connections
+4. Learn practical methods
+
+Generate questions in this JSON format:
+{
+  "questions": [
+    {
+      "id": "1",
+      "text": "The actual question text",
+      "category": "concept" | "application" | "personal" | "technique",
+      "reasoning": "Brief explanation of why this question is helpful"
+    }
+  ]
+}
+
+Categories:
+- "concept": Understanding theoretical aspects and definitions
+- "application": How to use concepts in real-life situations
+- "personal": Exploring individual experiences and connections
+- "technique": Learning specific methods and exercises
+
+Guidelines:
+- Make questions accessible and non-judgmental
+- Focus on ACT principles relevant to this chapter
+- Encourage curiosity and exploration
+- Vary question types across categories
+- Keep questions concise but meaningful`;
+
+      const result = await this.robustOpenAICall(
+        [{ role: "user", content: prompt }],
+        {
+          requireJSON: true,
+          maxTokens: 800,
+          parseResult: (content: string) => {
+            const parsed = JSON.parse(content);
+            if (!parsed.questions || !Array.isArray(parsed.questions)) {
+              throw new Error('Invalid AI response format: missing questions array');
+            }
+            return parsed;
+          }
+        }
+      ) as { questions: any[] };
+      
+      return result;
+
+    } catch (error) {
+      console.error('Error generating contextual questions:', error);
+      return { questions: [] };
+    }
+  }
+
+  // 7. Answer questions about chapter material
+  async answerMaterialQuestion(
+    chapterId: number,
+    chapterTitle: string,
+    currentSection: string | undefined,
+    question: string,
+    conversationHistory: Array<{role: string, content: string}> = []
+  ): Promise<{ answer: string }> {
+    try {
+      const contextHistory = conversationHistory.length > 0 
+        ? `\n\nConversation Context:\n${conversationHistory.map(msg => `${msg.role}: ${msg.content}`).join('\n')}`
+        : '';
+
+      const prompt = `You are an expert ACT therapist providing clear, helpful answers about chapter material.
+
+Chapter: ${chapterId} - ${chapterTitle}
+Current Section: ${currentSection || 'General chapter content'}
+User Question: "${question}"${contextHistory}
+
+Provide a helpful, therapeutic answer that:
+1. Addresses the specific question clearly
+2. Connects to ACT principles
+3. Offers practical guidance when appropriate
+4. Uses accessible, non-technical language
+5. Maintains a supportive, therapeutic tone
+
+Guidelines:
+- Be specific and practical
+- Include examples when helpful
+- Connect concepts to real-life application
+- Acknowledge if something is challenging
+- Encourage continued exploration
+- Keep response focused but comprehensive
+- Use warm, professional tone
+
+Respond directly with your answer (no JSON format needed).`;
+
+      const result = await this.robustOpenAICall(
+        [{ role: "user", content: prompt }],
+        {
+          requireJSON: false,
+          maxTokens: 600
+        }
+      ) as string;
+      
+      return { answer: result || 'I apologize, but I\'m having trouble processing your question right now. Could you try rephrasing it or asking about a specific aspect of the material?' };
+
+    } catch (error) {
+      console.error('Error answering material question:', error);
+      return { answer: 'I apologize, but I\'m having trouble processing your question right now. Please try again in a moment.' };
+    }
+  }
+
+  // 8. Contextual assistance for deeper exploration
+  async generateContextualAssistance(
+    context: TherapeuticContext,
+    questionText: string,
+    currentResponse: string
+  ): Promise<{ suggestions: any[] }> {
+    try {
+      const prompt = `You are an expert ACT therapist providing gentle, contextual assistance to help a user deepen their self-reflection. 
+
+Context:
+- Chapter: ${context.chapterId}
+- Section: ${context.sectionId}
+- Question: "${questionText}"
+- User's Current Response: "${currentResponse}"
+
+Your role is to:
+1. Analyze the user's response for depth and authenticity
+2. Generate 1-3 gentle suggestions to help them explore deeper
+3. Ask clarifying questions that encourage meaningful reflection
+4. Provide therapeutic insights when appropriate
+
+Generate contextual assistance in this JSON format:
+{
+  "suggestions": [
+    {
+      "type": "clarifying_question" | "deeper_prompt" | "therapeutic_insight",
+      "content": "The specific suggestion, question, or insight",
+      "reasoning": "Brief explanation of why this would be helpful"
+    }
+  ]
+}
+
+Guidelines:
+- Be gentle, non-judgmental, and supportive
+- Focus on ACT principles: acceptance, mindfulness, values, psychological flexibility
+- Ask open-ended questions that encourage exploration
+- If the response seems surface-level, gently invite deeper reflection
+- If the response shows insight, acknowledge it and help them explore further
+- Keep suggestions concise but meaningful
+- Maximum 3 suggestions to avoid overwhelming the user
+
+Types to use:
+- "clarifying_question": When you want to help them be more specific or explore an aspect further
+- "deeper_prompt": When encouraging them to go beyond surface-level responses
+- "therapeutic_insight": When you want to offer a therapeutic perspective or reframe`;
+
+      const result = await this.robustOpenAICall(
+        [{ role: "user", content: prompt }],
+        {
+          requireJSON: true,
+          maxTokens: 800,
+          parseResult: (content: string) => {
+            const parsed = JSON.parse(content);
+            if (!parsed.suggestions || !Array.isArray(parsed.suggestions)) {
+              throw new Error('Invalid AI response format: missing suggestions array');
+            }
+            return parsed;
+          }
+        }
+      ) as { suggestions: any[] };
+      
+      return result;
+
+    } catch (error) {
+      console.error('Error generating contextual assistance:', error);
+      return { suggestions: [] };
+    }
+  }
+
   // Generate session summary for continuity
   async generateSessionSummary(
     conversations: AiConversation[],
