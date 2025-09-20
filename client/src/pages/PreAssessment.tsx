@@ -7,6 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { FileText, ArrowLeft } from "lucide-react";
 import AssessmentFlow from "@/components/exercises/AssessmentFlow";
 import { useQuery } from "@tanstack/react-query";
+import type { Assessment } from "@shared/schema";
+import type { AssessmentResponse } from "@shared/assessmentQuestions";
 
 export default function PreAssessment() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
@@ -14,7 +16,7 @@ export default function PreAssessment() {
   const [, setLocation] = useLocation();
 
   // Fetch existing assessments to check if pre-assessment already completed
-  const { data: assessments = [] } = useQuery({
+  const { data: assessments = [] } = useQuery<Assessment[]>({
     queryKey: ['/api/assessments'],
     enabled: !!user,
   });
@@ -57,12 +59,12 @@ export default function PreAssessment() {
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center mb-6">
-            <Link href="/">
-              <Button variant="ghost" size="sm" className="mr-4" data-testid="button-back-home">
+            <Button variant="ghost" size="sm" className="mr-4" data-testid="button-back-home" asChild>
+              <Link href="/">
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back to Home
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           </div>
           
           <Card className="bg-card shadow-lg border border-border">
@@ -104,7 +106,7 @@ export default function PreAssessment() {
         {/* Assessment Flow */}
         <AssessmentFlow 
           assessmentType="pre"
-          existingResponses={preAssessment?.responses}
+          existingResponses={preAssessment?.responses as AssessmentResponse[] | undefined}
           onComplete={() => {
             toast({
               title: "Pre-Assessment Complete!",

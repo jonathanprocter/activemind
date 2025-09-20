@@ -1,4 +1,3 @@
-import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight } from "lucide-react";
@@ -29,14 +28,7 @@ export default function AssessmentQuestion({
   canGoNext,
   canGoPrevious,
 }: AssessmentQuestionProps) {
-  const [selectedRating, setSelectedRating] = useState<number | undefined>(currentAnswer);
-
-  useEffect(() => {
-    setSelectedRating(currentAnswer);
-  }, [currentAnswer, question.id]);
-
   const handleRatingSelect = (rating: number) => {
-    setSelectedRating(rating);
     onAnswerChange(question.id, rating);
   };
 
@@ -59,15 +51,17 @@ export default function AssessmentQuestion({
                       type="radio"
                       name={`q${question.id}`}
                       value={rating}
-                      checked={selectedRating === rating}
+                      checked={currentAnswer === rating}
                       onChange={() => handleRatingSelect(rating)}
                       className="sr-only"
                       data-testid={`radio-${question.id}-${rating}`}
                     />
                     <div
                       onClick={() => handleRatingSelect(rating)}
-                      className={`w-10 h-10 rounded-full border-2 transition-all duration-200 flex items-center justify-center cursor-pointer select-none ${
-                        selectedRating === rating
+                      role="radio"
+                      aria-checked={currentAnswer === rating}
+                      className={`w-10 h-10 rounded-full border-2 transition-all duration-200 flex items-center justify-center cursor-pointer select-none pointer-events-auto ${
+                        currentAnswer === rating
                           ? 'border-primary bg-primary text-primary-foreground shadow-md scale-105'
                           : 'border-muted-foreground/30 hover:border-primary hover:shadow-md hover:scale-105 bg-background'
                       }`}
@@ -97,7 +91,7 @@ export default function AssessmentQuestion({
               </Button>
               <Button
                 onClick={onNext}
-                disabled={!canGoNext || !selectedRating}
+                disabled={!canGoNext || !currentAnswer}
                 className="bg-primary text-primary-foreground hover:bg-primary/90"
                 data-testid="button-next-question"
               >

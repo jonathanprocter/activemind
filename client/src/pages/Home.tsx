@@ -65,22 +65,22 @@ export default function Home() {
           {/* Hero Section */}
           <section className="relative overflow-hidden">
             {/* Background Gradient */}
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-accent/5"></div>
-            <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-muted/20 to-transparent"></div>
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-accent/5 pointer-events-none"></div>
+            <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-muted/20 to-transparent pointer-events-none"></div>
             
-            <div className="relative py-16 px-4 sm:px-6 lg:px-8">
+            <div className="relative py-16 px-4 sm:px-6 lg:px-8 z-10">
               <div className="max-w-5xl mx-auto text-center">
                 {/* Hero Image with Enhanced Styling */}
                 <div className="mb-12 relative group">
-                  <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-accent/20 rounded-3xl blur-3xl transform scale-110 opacity-70 group-hover:opacity-90 transition-opacity duration-500"></div>
+                  <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-accent/20 rounded-3xl blur-3xl transform scale-110 opacity-70 group-hover:opacity-90 transition-opacity duration-500 pointer-events-none"></div>
                   <div className="relative overflow-hidden rounded-3xl shadow-2xl transform group-hover:scale-[1.02] transition-transform duration-500">
                     <img 
                       src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1200&h=400" 
                       alt="Peaceful meditation garden" 
                       className="w-full h-72 object-cover" 
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent"></div>
-                    <div className="absolute inset-0 bg-primary/10"></div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none"></div>
+                    <div className="absolute inset-0 bg-primary/10 pointer-events-none"></div>
                   </div>
                 </div>
                 
@@ -105,28 +105,28 @@ export default function Home() {
               <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-6 animate-slide-in-up" style={{animationDelay: '0.2s'}}>
                 {isFirstTimeUser ? (
                   // First-time user: Start with pre-assessment
-                  <Link href="/pre-assessment">
-                    <Button className="bg-gradient-to-r from-primary to-accent text-white hover:from-primary/90 hover:to-accent/90 px-8 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 btn-enhanced" data-testid="button-start-here">
+                  <Button className="bg-gradient-to-r from-primary to-accent text-white hover:from-primary/90 hover:to-accent/90 px-8 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 btn-enhanced" data-testid="button-start-here" asChild>
+                    <Link href="/pre-assessment">
                       <Play className="w-5 h-5 mr-3" />
                       Start Your Journey
-                    </Button>
-                  </Link>
+                    </Link>
+                  </Button>
                 ) : currentChapter ? (
                   // Returning user with progress: Continue chapter
-                  <Link href={`/chapter/${currentChapter.id}`}>
-                    <Button className="bg-gradient-to-r from-primary to-accent text-white hover:from-primary/90 hover:to-accent/90 px-8 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 btn-enhanced" data-testid="button-continue">
+                  <Button className="bg-gradient-to-r from-primary to-accent text-white hover:from-primary/90 hover:to-accent/90 px-8 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 btn-enhanced" data-testid="button-continue" asChild>
+                    <Link href={`/chapter/${currentChapter.id}`}>
                       <Play className="w-5 h-5 mr-3" />
                       Continue {currentChapter.title}
-                    </Button>
-                  </Link>
+                    </Link>
+                  </Button>
                 ) : nextChapter ? (
                   // Returning user, assessment done but no chapters started: Start first chapter
-                  <Link href={`/chapter/${nextChapter.id}`}>
-                    <Button className="bg-gradient-to-r from-primary to-accent text-white hover:from-primary/90 hover:to-accent/90 px-8 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 btn-enhanced" data-testid="button-start-chapter">
+                  <Button className="bg-gradient-to-r from-primary to-accent text-white hover:from-primary/90 hover:to-accent/90 px-8 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 btn-enhanced" data-testid="button-start-chapter" asChild>
+                    <Link href={`/chapter/${nextChapter.id}`}>
                       <Play className="w-5 h-5 mr-3" />
                       Start {nextChapter.title}
-                    </Button>
-                  </Link>
+                    </Link>
+                  </Button>
                 ) : null}
                 
                 {hasStartedJourney && (
@@ -320,17 +320,27 @@ export default function Home() {
                             "15 questions • 5-10 minutes"
                           }
                         </div>
-                        <Link href="/post-assessment">
+                        {completedChapters >= chapters.length || postAssessment ? (
                           <Button 
                             variant={postAssessment ? "outline" : "default"}
                             className="w-full"
-                            disabled={completedChapters < chapters.length && !postAssessment}
+                            data-testid="button-post-assessment"
+                            asChild
+                          >
+                            <Link href="/post-assessment">
+                              {postAssessment ? 'Review Post-Assessment' : 'Start Post-Assessment'}
+                            </Link>
+                          </Button>
+                        ) : (
+                          <Button 
+                            variant="outline"
+                            className="w-full"
+                            disabled
                             data-testid="button-post-assessment"
                           >
-                            {postAssessment ? 'Review Post-Assessment' : 
-                             completedChapters < chapters.length ? 'Complete All Chapters First' : 'Start Post-Assessment'}
+                            Complete All Chapters First
                           </Button>
-                        </Link>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
@@ -372,12 +382,12 @@ export default function Home() {
                               <span>Daily Commitments</span>
                             </div>
                           </div>
-                          <Link href="/coach">
-                            <Button className="w-full bg-gradient-to-r from-primary to-accent text-white hover:from-primary/90 hover:to-accent/90 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 btn-enhanced" data-testid="button-ai-coach">
+                          <Button className="w-full bg-gradient-to-r from-primary to-accent text-white hover:from-primary/90 hover:to-accent/90 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 btn-enhanced" data-testid="button-ai-coach" asChild>
+                            <Link href="/coach">
                               <Brain className="w-5 h-5 mr-3" />
                               Start Your Change Journey
-                            </Button>
-                          </Link>
+                            </Link>
+                          </Button>
                         </div>
                       </CardContent>
                     </Card>
@@ -461,15 +471,16 @@ export default function Home() {
                                 {chapter.completionRate}% complete
                               </span>
                               {!chapter.isLocked && !(isFirstTimeUser && !preAssessment) ? (
-                                <Link href={`/chapter/${chapter.id}`}>
-                                  <Button 
-                                    variant={chapter.completionRate > 0 || shouldHighlight ? "default" : "outline"} 
-                                    size="sm"
-                                    data-testid={`button-chapter-${chapter.id}`}
-                                  >
+                                <Button 
+                                  variant={chapter.completionRate > 0 || shouldHighlight ? "default" : "outline"} 
+                                  size="sm"
+                                  data-testid={`button-chapter-${chapter.id}`}
+                                  asChild
+                                >
+                                  <Link href={`/chapter/${chapter.id}`}>
                                     {chapter.completionRate === 0 ? 'Start' : 'Continue'}
-                                  </Button>
-                                </Link>
+                                  </Link>
+                                </Button>
                               ) : (
                                 <Button 
                                   variant="outline" 
