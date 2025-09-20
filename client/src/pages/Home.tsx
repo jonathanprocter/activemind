@@ -105,7 +105,7 @@ export default function Home() {
               <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-6 animate-slide-in-up" style={{animationDelay: '0.2s'}}>
                 {isFirstTimeUser ? (
                   // First-time user: Start with pre-assessment
-                  <Button className="bg-gradient-to-r from-primary to-accent text-white hover:from-primary/90 hover:to-accent/90 px-8 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 btn-enhanced" data-testid="button-start-here" asChild>
+                  <Button className="bg-gradient-to-r from-primary to-accent text-white hover:from-primary/90 hover:to-accent/90 px-8 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300" data-testid="button-start-here" asChild>
                     <Link href="/pre-assessment">
                       <Play className="w-5 h-5 mr-3" />
                       Start Your Journey
@@ -113,7 +113,7 @@ export default function Home() {
                   </Button>
                 ) : currentChapter ? (
                   // Returning user with progress: Continue chapter
-                  <Button className="bg-gradient-to-r from-primary to-accent text-white hover:from-primary/90 hover:to-accent/90 px-8 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 btn-enhanced" data-testid="button-continue" asChild>
+                  <Button className="bg-gradient-to-r from-primary to-accent text-white hover:from-primary/90 hover:to-accent/90 px-8 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300" data-testid="button-continue" asChild>
                     <Link href={`/chapter/${currentChapter.id}`}>
                       <Play className="w-5 h-5 mr-3" />
                       Continue {currentChapter.title}
@@ -121,7 +121,7 @@ export default function Home() {
                   </Button>
                 ) : nextChapter ? (
                   // Returning user, assessment done but no chapters started: Start first chapter
-                  <Button className="bg-gradient-to-r from-primary to-accent text-white hover:from-primary/90 hover:to-accent/90 px-8 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 btn-enhanced" data-testid="button-start-chapter" asChild>
+                  <Button className="bg-gradient-to-r from-primary to-accent text-white hover:from-primary/90 hover:to-accent/90 px-8 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300" data-testid="button-start-chapter" asChild>
                     <Link href={`/chapter/${nextChapter.id}`}>
                       <Play className="w-5 h-5 mr-3" />
                       Start {nextChapter.title}
