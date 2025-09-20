@@ -169,7 +169,7 @@ export default function AiQuestionInterface({
       <DialogTrigger asChild>
         <Button 
           variant="outline" 
-          className="btn-enhanced border-accent/30 hover:border-accent text-accent hover:text-accent-foreground hover:bg-accent/10"
+          className="border-accent/30 hover:border-accent text-accent hover:text-accent-foreground hover:bg-accent/10"
           data-testid="ai-question-button"
         >
           <HelpCircle className="w-4 h-4 mr-2" />
@@ -279,7 +279,7 @@ export default function AiQuestionInterface({
               <Button
                 onClick={() => askQuestion(customQuestion)}
                 disabled={!customQuestion.trim() || isLoading}
-                className="btn-enhanced"
+                className=""
                 data-testid="send-question"
               >
                 <Send className="w-4 h-4" />

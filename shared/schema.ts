@@ -188,61 +188,61 @@ export const coachingInsights = pgTable("coaching_insights", {
 });
 
 // Insert schemas
-export const insertChapterSchema = createInsertSchema(chapters).omit({ id: true });
-export const insertWorkbookProgressSchema = createInsertSchema(workbookProgress).omit({ 
-  id: true, 
-  createdAt: true, 
-  updatedAt: true 
-});
-export const insertAssessmentSchema = createInsertSchema(assessments).omit({ 
-  id: true, 
-  completedAt: true 
-});
-export const insertAutoSaveSchema = createInsertSchema(autoSaves).omit({ 
-  id: true, 
-  savedAt: true 
-});
+export const insertChapterSchema = createInsertSchema(chapters).omit(['id']);
+export const insertWorkbookProgressSchema = createInsertSchema(workbookProgress).omit([
+  'id', 
+  'createdAt', 
+  'updatedAt' 
+]);
+export const insertAssessmentSchema = createInsertSchema(assessments).omit([
+  'id', 
+  'completedAt' 
+]);
+export const insertAutoSaveSchema = createInsertSchema(autoSaves).omit([
+  'id', 
+  'savedAt' 
+]);
 
 // AI features insert schemas
-export const insertAiConversationSchema = createInsertSchema(aiConversations).omit({ 
-  id: true, 
-  createdAt: true, 
-  updatedAt: true 
-});
-export const insertAiInsightSchema = createInsertSchema(aiInsights).omit({ 
-  id: true, 
-  createdAt: true 
-});
-export const insertAiGuidanceSchema = createInsertSchema(aiGuidance).omit({ 
-  id: true, 
-  createdAt: true 
-});
-export const insertAiPromptSchema = createInsertSchema(aiPrompts).omit({ 
-  id: true, 
-  createdAt: true,
-  respondedAt: true 
-});
-export const insertAdaptiveRecommendationSchema = createInsertSchema(adaptiveRecommendations).omit({ 
-  id: true, 
-  createdAt: true,
-  implementedAt: true 
-});
+export const insertAiConversationSchema = createInsertSchema(aiConversations).omit([
+  'id', 
+  'createdAt', 
+  'updatedAt' 
+]);
+export const insertAiInsightSchema = createInsertSchema(aiInsights).omit([
+  'id', 
+  'createdAt' 
+]);
+export const insertAiGuidanceSchema = createInsertSchema(aiGuidance).omit([
+  'id', 
+  'createdAt' 
+]);
+export const insertAiPromptSchema = createInsertSchema(aiPrompts).omit([
+  'id', 
+  'createdAt',
+  'respondedAt' 
+]);
+export const insertAdaptiveRecommendationSchema = createInsertSchema(adaptiveRecommendations).omit([
+  'id', 
+  'createdAt',
+  'implementedAt' 
+]);
 
 // Behavioral Change Coach insert schemas
-export const insertActionPlanSchema = createInsertSchema(actionPlans).omit({ 
-  id: true, 
-  createdAt: true,
-  updatedAt: true 
-});
-export const insertDailyCommitmentSchema = createInsertSchema(dailyCommitments).omit({ 
-  id: true, 
-  createdAt: true,
-  completedAt: true 
-});
-export const insertCoachingInsightSchema = createInsertSchema(coachingInsights).omit({ 
-  id: true, 
-  createdAt: true 
-});
+export const insertActionPlanSchema = createInsertSchema(actionPlans).omit([
+  'id', 
+  'createdAt',
+  'updatedAt' 
+]);
+export const insertDailyCommitmentSchema = createInsertSchema(dailyCommitments).omit([
+  'id', 
+  'createdAt',
+  'completedAt' 
+]);
+export const insertCoachingInsightSchema = createInsertSchema(coachingInsights).omit([
+  'id', 
+  'createdAt' 
+]);
 
 // Types
 export type UpsertUser = typeof users.$inferInsert;

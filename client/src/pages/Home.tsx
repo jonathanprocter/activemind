@@ -382,7 +382,7 @@ export default function Home() {
                               <span>Daily Commitments</span>
                             </div>
                           </div>
-                          <Button className="w-full bg-gradient-to-r from-primary to-accent text-white hover:from-primary/90 hover:to-accent/90 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 btn-enhanced" data-testid="button-ai-coach" asChild>
+                          <Button className="w-full bg-gradient-to-r from-primary to-accent text-white hover:from-primary/90 hover:to-accent/90 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300" data-testid="button-ai-coach" asChild>
                             <Link href="/coach">
                               <Brain className="w-5 h-5 mr-3" />
                               Start Your Change Journey

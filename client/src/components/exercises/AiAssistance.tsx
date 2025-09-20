@@ -209,7 +209,7 @@ export default function AiAssistance({
                         variant="outline"
                         size="sm"
                         onClick={() => handleApplySuggestion(suggestion)}
-                        className="shrink-0 btn-enhanced"
+                        className="shrink-0"
                         data-testid={`apply-suggestion-${index}`}
                       >
                         Apply
