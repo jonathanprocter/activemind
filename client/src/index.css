@@ -5,50 +5,50 @@
 
 :root {
   /* Natural minimalistic palette - ivory, grey-blue, stone tones */
-  --background: hsl(40 20% 97%);  /* Soft ivory */
-  --foreground: hsl(215 15% 25%);  /* Deep grey-blue */
-  --card: hsl(30 25% 99%);  /* Warm ivory white */
-  --card-foreground: hsl(215 15% 25%);
-  --primary: hsl(200 20% 55%);  /* Calming grey-blue */
-  --primary-foreground: hsl(215 15% 25%);  /* Dark text for better contrast */
-  --secondary: hsl(45 30% 88%);  /* Warm stone */
-  --secondary-foreground: hsl(215 15% 30%);
-  --muted: hsl(35 25% 93%);  /* Soft warm grey */
-  --muted-foreground: hsl(215 12% 45%);  /* Muted grey-blue */
-  --accent: hsl(180 15% 65%);  /* Sage grey-green */
-  --accent-foreground: hsl(215 15% 25%);  /* Dark text for better contrast */
-  --border: hsl(35 20% 87%);  /* Natural stone border */
-  --input: hsl(35 25% 94%);  /* Light natural input bg */
-  --ring: hsl(200 20% 55%);  /* Grey-blue focus ring */
-  --popover: hsl(30 25% 99%);
-  --popover-foreground: hsl(215 15% 25%);
-  --destructive: hsl(356 75% 50%);  /* Softer red */
-  --destructive-foreground: hsl(0 0% 100%);
+  --background: 40 20% 97%;  /* Soft ivory */
+  --foreground: 215 15% 25%;  /* Deep grey-blue */
+  --card: 30 25% 99%;  /* Warm ivory white */
+  --card-foreground: 215 15% 25%;
+  --primary: 200 20% 55%;  /* Calming grey-blue */
+  --primary-foreground: 215 15% 25%;  /* Dark text for better contrast */
+  --secondary: 45 30% 88%;  /* Warm stone */
+  --secondary-foreground: 215 15% 30%;
+  --muted: 35 25% 93%;  /* Soft warm grey */
+  --muted-foreground: 215 12% 45%;  /* Muted grey-blue */
+  --accent: 180 15% 65%;  /* Sage grey-green */
+  --accent-foreground: 215 15% 25%;  /* Dark text for better contrast */
+  --border: 35 20% 87%;  /* Natural stone border */
+  --input: 35 25% 94%;  /* Light natural input bg */
+  --ring: 200 20% 55%;  /* Grey-blue focus ring */
+  --popover: 30 25% 99%;
+  --popover-foreground: 215 15% 25%;
+  --destructive: 356 75% 50%;  /* Softer red */
+  --destructive-foreground: 0 0% 100%;
   --radius: 0.75rem;
   --font-sans: 'Inter', system-ui, sans-serif;
 }
 
 .dark {
   /* Natural dark mode - deep stone & charcoal with warm undertones */
-  --background: hsl(220 15% 9%);  /* Deep charcoal with blue undertone */
-  --foreground: hsl(35 15% 88%);  /* Warm stone white */
-  --card: hsl(215 18% 12%);  /* Rich dark blue-grey */
-  --card-foreground: hsl(35 15% 88%);
-  --primary: hsl(200 25% 50%);  /* Brightened grey-blue for contrast */
-  --primary-foreground: hsl(0 0% 100%);
-  --secondary: hsl(40 20% 22%);  /* Warm dark stone */
-  --secondary-foreground: hsl(35 15% 85%);
-  --muted: hsl(215 18% 16%);  /* Muted dark blue-grey */
-  --muted-foreground: hsl(215 10% 65%);  /* Mid-tone grey-blue */
-  --accent: hsl(180 20% 45%);  /* Deeper sage for dark mode */
-  --accent-foreground: hsl(0 0% 100%);
-  --border: hsl(215 15% 20%);  /* Subtle dark border */
-  --input: hsl(215 18% 14%);  /* Dark input background */
-  --ring: hsl(200 25% 50%);  /* Grey-blue focus ring */
-  --popover: hsl(215 18% 12%);
-  --popover-foreground: hsl(35 15% 88%);
-  --destructive: hsl(356 80% 55%);  /* Softened red for dark mode */
-  --destructive-foreground: hsl(0 0% 100%);
+  --background: 220 15% 9%;  /* Deep charcoal with blue undertone */
+  --foreground: 35 15% 88%;  /* Warm stone white */
+  --card: 215 18% 12%;  /* Rich dark blue-grey */
+  --card-foreground: 35 15% 88%;
+  --primary: 200 25% 50%;  /* Brightened grey-blue for contrast */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 40 20% 22%;  /* Warm dark stone */
+  --secondary-foreground: 35 15% 85%;
+  --muted: 215 18% 16%;  /* Muted dark blue-grey */
+  --muted-foreground: 215 10% 65%;  /* Mid-tone grey-blue */
+  --accent: 180 20% 45%;  /* Deeper sage for dark mode */
+  --accent-foreground: 0 0% 100%;
+  --border: 215 15% 20%;  /* Subtle dark border */
+  --input: 215 18% 14%;  /* Dark input background */
+  --ring: 200 25% 50%;  /* Grey-blue focus ring */
+  --popover: 215 18% 12%;
+  --popover-foreground: 35 15% 88%;
+  --destructive: 356 80% 55%;  /* Softened red for dark mode */
+  --destructive-foreground: 0 0% 100%;
 }
 
 @layer base {
@@ -67,6 +67,23 @@
 }
 
 @layer utilities {
+  .gradient-text {
+    color: hsl(var(--foreground));
+  }
+
+  @supports ((-webkit-background-clip: text) or (background-clip: text)) {
+    .gradient-text {
+      background-image: linear-gradient(
+        135deg,
+        var(--gradient-text-from, hsl(var(--primary))) 0%,
+        var(--gradient-text-to, hsl(var(--accent))) 100%
+      );
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+  }
+
   /* Natural minimalistic gradients and backgrounds */
   .gradient-bg {
     background: linear-gradient(135deg, hsl(var(--background)) 0%, hsl(var(--muted)) 100%);

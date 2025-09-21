@@ -1,30 +1,53 @@
 // AI service for therapeutic features
 // Using OpenAI integration for ACT workbook
 import OpenAI from "openai";
-import type { 
-  AiConversation, 
-  AiInsight, 
-  AiGuidance, 
-  AiPrompt, 
-  AdaptiveRecommendation,
+import type {
+  AiConversation,
+  AiInsight,
+  AiGuidance,
   Assessment,
-  WorkbookProgress,
   ActionPlan,
   DailyCommitment,
-  CoachingInsight
+  CoachingInsight,
+  InsertAiGuidance,
+  InsertAiPrompt,
+  InsertAiInsight,
+  InsertAdaptiveRecommendation
 } from "@shared/schema";
 
 // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+export interface AssessmentSummary {
+  assessmentType: Assessment['assessmentType'];
+  averageScore: number;
+  responseCount: number;
+  completedAt: Date | null;
+}
+
+export interface ProgressSummary {
+  chapterId: number;
+  sectionId: string;
+  completed: boolean;
+  updatedAt: Date | null;
+}
+
+export interface InsightSummary {
+  insightType: AiInsight['insightType'];
+  title: string;
+  description: string;
+  confidence: number | null;
+  createdAt: Date | null;
+}
 
 export interface TherapeuticContext {
   userId: string;
   chapterId?: number;
   sectionId?: string;
   userResponses?: any;
-  assessmentHistory?: Assessment[];
-  progressHistory?: WorkbookProgress[];
-  previousInsights?: AiInsight[];
+  assessmentHistory?: AssessmentSummary[];
+  progressHistory?: ProgressSummary[];
+  previousInsights?: InsightSummary[];
 }
 
 export interface ConversationMessage {
@@ -143,7 +166,7 @@ export class AITherapeuticService {
   async generateTherapeuticGuidance(
     context: TherapeuticContext,
     specificChallenges?: string[]
-  ): Promise<AiGuidance[]> {
+  ): Promise<InsertAiGuidance[]> {
     try {
       const prompt = `You are a professional ACT (Acceptance and Commitment Therapy) therapist. Based on the user's context, provide personalized therapeutic guidance.
 
@@ -183,12 +206,24 @@ Focus on ACT principles: psychological flexibility, acceptance, mindfulness, val
         }
       ) as { guidance: any[] };
       
-      return result.guidance.map((g: any) => ({
-        ...g,
+      const allowedGuidanceTypes = new Set([
+        "exercise_suggestion",
+        "coping_strategy",
+        "mindfulness_technique",
+        "values_exploration",
+        "behavioral_change"
+      ]);
+
+      return result.guidance.map((g: any): InsertAiGuidance => ({
         userId: context.userId,
         chapterId: context.chapterId,
         sectionId: context.sectionId,
-        personalizedFor: { context: g.personalizedFor || 'general guidance' }
+        guidanceType: allowedGuidanceTypes.has(g.guidanceType)
+          ? g.guidanceType
+          : "behavioral_change",
+        title: typeof g.title === 'string' && g.title.trim() ? g.title.trim() : "Personalized Guidance",
+        content: typeof g.content === 'string' && g.content.trim() ? g.content.trim() : "Let's explore a values-aligned next step together.",
+        personalizedFor: g.personalizedFor ? { context: g.personalizedFor } : undefined
       }));
 
     } catch (error) {
@@ -201,7 +236,7 @@ Focus on ACT principles: psychological flexibility, acceptance, mindfulness, val
   async generateReflectionPrompts(
     context: TherapeuticContext,
     previousResponse?: string
-  ): Promise<AiPrompt[]> {
+  ): Promise<InsertAiPrompt[]> {
     try {
       const prompt = `You are an expert ACT therapist specializing in deep reflection exercises. Generate intelligent, thought-provoking reflection prompts.
 
@@ -239,12 +274,24 @@ Make prompts progressively deeper, building on previous responses. Focus on ACT 
         }
       ) as { prompts: any[] };
       
-      return result.prompts.map((p: any) => ({
-        ...p,
+      const allowedPromptTypes = new Set([
+        "reflection_question",
+        "exploration_prompt",
+        "values_clarification",
+        "mindfulness_cue",
+        "behavioral_inquiry"
+      ]);
+
+      return result.prompts.map((p: any): InsertAiPrompt => ({
         userId: context.userId,
         chapterId: context.chapterId,
         sectionId: context.sectionId,
-        followUpPrompts: p.followUpPrompts
+        promptType: allowedPromptTypes.has(p.promptType)
+          ? p.promptType
+          : "reflection_question",
+        promptText: typeof p.promptText === 'string' && p.promptText.trim() ? p.promptText.trim() : "Take a mindful moment to notice what feels most important right now.",
+        depth: typeof p.depth === 'number' ? Math.min(Math.max(Math.round(p.depth), 1), 3) : 1,
+        followUpPrompts: Array.isArray(p.followUpPrompts) ? p.followUpPrompts : undefined
       }));
 
     } catch (error) {
@@ -256,7 +303,7 @@ Make prompts progressively deeper, building on previous responses. Focus on ACT 
   // 3. Progress insights analysis
   async analyzeProgressInsights(
     context: TherapeuticContext
-  ): Promise<AiInsight[]> {
+  ): Promise<InsertAiInsight[]> {
     try {
       const prompt = `You are an expert ACT therapist analyzing client progress patterns. Analyze the user's therapeutic journey and provide actionable insights.
 
@@ -296,10 +343,23 @@ Focus on psychological flexibility growth, behavioral patterns, and therapeutic 
         }
       ) as { insights: any[] };
       
-      return result.insights.map((i: any) => ({
-        ...i,
+      const allowedInsightTypes = new Set([
+        "progress_analysis",
+        "pattern_recognition",
+        "therapeutic_recommendation",
+        "growth_opportunity"
+      ]);
+
+      return result.insights.map((i: any): InsertAiInsight => ({
         userId: context.userId,
-        data: { analysis: i.data }
+        insightType: allowedInsightTypes.has(i.insightType)
+          ? i.insightType
+          : "progress_analysis",
+        title: typeof i.title === 'string' && i.title.trim() ? i.title.trim() : "Therapeutic Insight",
+        description: typeof i.description === 'string' && i.description.trim() ? i.description.trim() : "Reflect on how your recent actions align with your values and the flexibility you're building.",
+        confidence: typeof i.confidence === 'number' ? Math.min(Math.max(Math.round(i.confidence), 0), 100) : null,
+        actionable: typeof i.actionable === 'boolean' ? i.actionable : true,
+        data: i.data ? { analysis: i.data } : undefined
       }));
 
     } catch (error) {
@@ -311,7 +371,7 @@ Focus on psychological flexibility growth, behavioral patterns, and therapeutic 
   // 4. Adaptive content system
   async generateAdaptiveRecommendations(
     context: TherapeuticContext
-  ): Promise<AdaptiveRecommendation[]> {
+  ): Promise<InsertAdaptiveRecommendation[]> {
     try {
       const prompt = `You are an expert ACT therapist designing adaptive therapeutic interventions. Based on user progress and responses, recommend personalized adaptations.
 
@@ -351,12 +411,26 @@ Focus on optimizing learning and therapeutic outcomes based on individual progre
         }
       ) as { recommendations: any[] };
       
-      return result.recommendations.map((r: any) => ({
-        ...r,
+      const allowedRecommendationTypes = new Set([
+        "exercise_modification",
+        "difficulty_adjustment",
+        "focus_area",
+        "learning_path",
+        "practice_frequency"
+      ]);
+
+      return result.recommendations.map((r: any): InsertAdaptiveRecommendation => ({
         userId: context.userId,
+        recommendationType: allowedRecommendationTypes.has(r.recommendationType)
+          ? r.recommendationType
+          : "focus_area",
+        title: typeof r.title === 'string' && r.title.trim() ? r.title.trim() : "Personalized Recommendation",
+        description: typeof r.description === 'string' && r.description.trim() ? r.description.trim() : "Adjust your next practice session to stay aligned with your values and current capacity.",
         targetChapterId: context.chapterId,
         targetSectionId: context.sectionId,
-        parameters: { adaptation: r.parameters }
+        adaptationReason: typeof r.adaptationReason === 'string' && r.adaptationReason.trim() ? r.adaptationReason.trim() : undefined,
+        priority: typeof r.priority === 'number' ? Math.min(Math.max(Math.round(r.priority), 1), 5) : undefined,
+        parameters: r.parameters ? { details: r.parameters } : undefined
       }));
 
     } catch (error) {

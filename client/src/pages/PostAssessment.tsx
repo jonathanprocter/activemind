@@ -7,6 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { FileText, ArrowLeft, TrendingUp } from "lucide-react";
 import AssessmentFlow from "@/components/exercises/AssessmentFlow";
 import { useQuery } from "@tanstack/react-query";
+import type { Assessment } from "@shared/schema";
+import type { AssessmentResponse } from "@shared/assessmentQuestions";
 
 export default function PostAssessment() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
@@ -14,7 +16,7 @@ export default function PostAssessment() {
   const [, setLocation] = useLocation();
 
   // Fetch existing assessments
-  const { data: assessments = [] } = useQuery({
+  const { data: assessments = [] } = useQuery<Assessment[]>({
     queryKey: ['/api/assessments'],
     enabled: !!user,
   });
@@ -53,7 +55,7 @@ export default function PostAssessment() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sage-50 to-warm-50 dark:from-gray-900 dark:to-gray-800">
+    <div className="min-h-screen bg-gradient-to-br from-background via-muted/40 to-muted/60 dark:from-background dark:via-muted/10 dark:to-muted/20">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         {/* Header */}
         <div className="mb-8">
@@ -94,7 +96,7 @@ export default function PostAssessment() {
                 </div>
               )}
               
-              <div className="flex items-center justify-center space-x-6 text-sm text-muted-foreground">
+              <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-sm text-muted-foreground">
                 <div className="flex items-center space-x-2">
                   <div className="w-4 h-4 bg-green-100 dark:bg-green-900 rounded"></div>
                   <span>15 Questions</span>
@@ -115,7 +117,7 @@ export default function PostAssessment() {
         {/* Assessment Flow */}
         <AssessmentFlow 
           assessmentType="post"
-          existingResponses={postAssessment?.responses}
+          existingResponses={postAssessment?.responses as AssessmentResponse[] | undefined}
           onComplete={() => {
             toast({
               title: "Post-Assessment Complete!",

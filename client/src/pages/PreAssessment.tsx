@@ -54,7 +54,7 @@ export default function PreAssessment() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sage-50 to-warm-50 dark:from-gray-900 dark:to-gray-800">
+    <div className="min-h-screen bg-gradient-to-br from-background via-muted/40 to-muted/60 dark:from-background dark:via-muted/10 dark:to-muted/20">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         {/* Header */}
         <div className="mb-8">
@@ -85,7 +85,7 @@ export default function PreAssessment() {
                   based on how true it feels for you right now. There are no right or wrong answers.
                 </p>
               </div>
-              <div className="flex items-center justify-center space-x-6 text-sm text-muted-foreground">
+              <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-sm text-muted-foreground">
                 <div className="flex items-center space-x-2">
                   <div className="w-4 h-4 bg-primary/20 rounded"></div>
                   <span>15 Questions</span>
