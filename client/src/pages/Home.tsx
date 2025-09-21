@@ -87,9 +87,9 @@ export default function Home() {
                 {/* Enhanced Typography */}
                 <div className="mb-8 animate-slide-in-up">
                   <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-foreground mb-6 leading-tight tracking-tight">
-                    <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                      {isFirstTimeUser ? 
-                        `Welcome, ${(user as any)?.firstName || 'Friend'}!` : 
+                    <span className="gradient-text">
+                      {isFirstTimeUser ?
+                        `Welcome, ${(user as any)?.firstName || 'Friend'}!` :
                         `Welcome back, ${(user as any)?.firstName || 'Friend'}`
                       }
                     </span>
@@ -173,7 +173,7 @@ export default function Home() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent mb-3">{overallProgress}%</div>
+                    <div className="text-4xl font-bold gradient-text mb-3">{overallProgress}%</div>
                     <ProgressBar progress={overallProgress} className="mt-2 h-3 rounded-full" />
                     <p className="text-xs text-muted-foreground mt-2">Keep going strong!</p>
                   </CardContent>

@@ -151,20 +151,20 @@ export function BehavioralChangeCoach() {
       </Card>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="plans" data-testid="tab-action-plans">
+        <TabsList className="grid w-full grid-cols-2 gap-2 md:grid-cols-4">
+          <TabsTrigger value="plans" data-testid="tab-action-plans" className="text-xs md:text-sm">
             <Target className="w-4 h-4 mr-2" />
             Action Plans
           </TabsTrigger>
-          <TabsTrigger value="daily" data-testid="tab-daily-commitments">
+          <TabsTrigger value="daily" data-testid="tab-daily-commitments" className="text-xs md:text-sm">
             <Calendar className="w-4 h-4 mr-2" />
             Daily Commitments
           </TabsTrigger>
-          <TabsTrigger value="progress" data-testid="tab-progress">
+          <TabsTrigger value="progress" data-testid="tab-progress" className="text-xs md:text-sm">
             <TrendingUp className="w-4 h-4 mr-2" />
             Progress
           </TabsTrigger>
-          <TabsTrigger value="insights" data-testid="tab-coaching-insights">
+          <TabsTrigger value="insights" data-testid="tab-coaching-insights" className="text-xs md:text-sm">
             <Heart className="w-4 h-4 mr-2" />
             AI Insights
           </TabsTrigger>

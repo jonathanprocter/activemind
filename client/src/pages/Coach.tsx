@@ -15,7 +15,7 @@ export default function Coach() {
             </Button>
           </Link>
           <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+            <h1 className="text-4xl font-bold mb-4 gradient-text">
               Your Personal Change Coach
             </h1>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">

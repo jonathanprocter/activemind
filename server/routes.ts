@@ -6,7 +6,7 @@ import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { insertAssessmentSchema, insertWorkbookProgressSchema, insertAutoSaveSchema } from "@shared/schema";
 import { z } from "zod";
-import { aiService } from "./aiService";
+import { aiService, type ConversationMessage } from "./aiService";
 
 const updateProgressSchema = insertWorkbookProgressSchema.omit({ 
   userId: true  // userId will be added server-side from auth session
@@ -474,8 +474,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Get conversation history
       const conversation = await storage.getAiConversation(userId, sessionId);
-      const messages = conversation?.messages || [];
-      
+      const existingMessages = Array.isArray(conversation?.messages)
+        ? conversation!.messages
+        : [];
+      const messages: ConversationMessage[] = existingMessages.map((msg: any) => ({
+        role: msg.role === 'assistant' ? 'assistant' : 'user',
+        content: typeof msg.content === 'string' ? msg.content : String(msg.content ?? ''),
+        timestamp: msg.timestamp ? new Date(msg.timestamp) : new Date()
+      }));
+
       // Add user message
       messages.push({
         role: 'user',
@@ -738,41 +745,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Utility function to build therapeutic context with data minimization
-  async function buildTherapeuticContext(userId: string, chapterId?: number, sectionId?: string, userResponses?: any) {
+  async function buildTherapeuticContext(userId: string, chapterId?: number | null, sectionId?: string | null, userResponses?: any) {
     try {
-      const [assessmentHistory, progressHistory, previousInsights] = await Promise.all([
+      const [assessmentHistory, progressHistorySource, previousInsights] = await Promise.all([
         storage.getAssessments(userId),
         chapterId ? storage.getChapterProgress(userId, chapterId) : storage.getUserProgress(userId),
         storage.getAiInsights(userId, false)
       ]);
 
-      // Truncate data to prevent token overflow (keep last 5 assessments, 10 progress entries, 5 insights)
-      const truncatedAssessments = assessmentHistory.slice(-5).map(a => ({
-        scores: a.scores,
-        completedAt: a.completedAt,
-        // Remove PII - only keep scores and dates
-      }));
+      const truncatedAssessments = assessmentHistory.slice(-5).map(assessment => {
+        const responses = Array.isArray(assessment.responses) ? assessment.responses as Array<{ rating?: number }> : [];
+        const ratings = responses
+          .map(response => typeof response.rating === 'number' ? response.rating : Number(response.rating))
+          .filter(rating => Number.isFinite(rating)) as number[];
+        const total = ratings.reduce((sum, rating) => sum + rating, 0);
+        const count = ratings.length;
+        const averageScore = count > 0 ? Number((total / count).toFixed(2)) : 0;
 
-      const truncatedProgress = Array.isArray(progressHistory) 
-        ? progressHistory.slice(-10).map(p => ({
-            chapterId: p.chapterId,
-            sectionId: p.sectionId,
-            completionStatus: p.completionStatus,
-            updatedAt: p.updatedAt
-          }))
-        : progressHistory;
+        return {
+          assessmentType: assessment.assessmentType,
+          averageScore,
+          responseCount: count,
+          completedAt: assessment.completedAt ?? null
+        };
+      });
 
-      const truncatedInsights = previousInsights.slice(-5).map(i => ({
-        type: i.type,
-        content: i.content,
-        confidence: i.confidence,
-        createdAt: i.createdAt
+      const progressArray = Array.isArray(progressHistorySource)
+        ? progressHistorySource
+        : Array.isArray((progressHistorySource as any)?.progress)
+          ? (progressHistorySource as any).progress
+          : [];
+
+      const truncatedProgress = progressArray.slice(-10).map((progress: any) => ({
+        chapterId: progress.chapterId,
+        sectionId: progress.sectionId,
+        completed: Boolean(progress.completed),
+        updatedAt: progress.updatedAt ?? null
+      })).filter((entry: { chapterId: unknown; sectionId: unknown }) =>
+        typeof entry.chapterId === 'number' && typeof entry.sectionId === 'string'
+      );
+
+      const truncatedInsights = previousInsights.slice(-5).map(insight => ({
+        insightType: insight.insightType,
+        title: insight.title,
+        description: insight.description,
+        confidence: insight.confidence ?? null,
+        createdAt: insight.createdAt ?? null
       }));
 
       return {
-        userId: userId.substring(0, 8) + "...", // Anonymize user ID
-        chapterId,
-        sectionId,
+        userId,
+        chapterId: chapterId ?? undefined,
+        sectionId: sectionId ?? undefined,
         userResponses,
         assessmentHistory: truncatedAssessments,
         progressHistory: truncatedProgress,
@@ -782,9 +806,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Error building therapeutic context:", error);
       // Return minimal context on error
       return {
-        userId: userId.substring(0, 8) + "...",
-        chapterId,
-        sectionId,
+        userId,
+        chapterId: chapterId ?? undefined,
+        sectionId: sectionId ?? undefined,
         userResponses,
         assessmentHistory: [],
         progressHistory: [],
