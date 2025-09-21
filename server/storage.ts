@@ -39,7 +39,7 @@ import {
   type InsertCoachingInsight
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, gte } from "drizzle-orm";
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
@@ -510,7 +510,8 @@ export class DatabaseStorage implements IStorage {
       .from(dailyCommitments)
       .where(and(
         eq(dailyCommitments.userId, userId),
-        // Use comparison for date strings in YYYY-MM-DD format
+        // Include commitments on or after the cutoff date (dates are stored as YYYY-MM-DD strings)
+        gte(dailyCommitments.date, cutoffString)
       ))
       .orderBy(desc(dailyCommitments.date));
   }

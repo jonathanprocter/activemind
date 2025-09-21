@@ -77,7 +77,9 @@ export const aiConversations = pgTable("ai_conversations", {
   sessionId: varchar("session_id").notNull(), // Groups related messages
   messages: jsonb("messages").notNull(), // Array of {role: 'user'|'assistant', content: string, timestamp: Date}
   context: jsonb("context"), // Exercise context, chapter info, etc.
-  type: varchar("type", { enum: ["therapeutic_guidance", "reflection_support", "general_chat"] }).notNull(),
+  type: varchar("type", {
+    enum: ["therapeutic_guidance", "crisis_support", "reflection", "goal_setting"],
+  }).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
